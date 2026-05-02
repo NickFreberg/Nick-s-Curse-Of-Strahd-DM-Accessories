@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wheel of Wild Magic — Scarlax's Gambit</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100vh;background:#0a0a0a;display:flex;align-items:center;justify-content:center;padding:2rem;}
+.root{display:flex;flex-direction:column;align-items:center;padding:2rem 1.5rem 2.5rem;background:radial-gradient(ellipse at 50% 0%,#2a0a0a 0%,#0d0d0d 70%);border-radius:16px;border:1px solid #7a5c1e;position:relative;overflow:hidden;font-family:'Cinzel',serif;max-width:620px;width:100%;}
+.root::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(120,80,20,0.06) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(120,80,20,0.06) 40px);pointer-events:none;}
+.corner{position:absolute;width:56px;height:56px;opacity:0.45;}
+.corner svg{width:100%;height:100%;}
+.tl{top:8px;left:8px;}.tr{top:8px;right:8px;transform:scaleX(-1);}.bl{bottom:8px;left:8px;transform:scaleY(-1);}.br{bottom:8px;right:8px;transform:scale(-1);}
+.title{font-family:'Cinzel Decorative',serif;font-size:24px;font-weight:700;color:#f0c040;text-shadow:0 0 18px rgba(240,160,20,0.7),0 0 40px rgba(200,80,20,0.4);letter-spacing:0.08em;text-align:center;margin-bottom:4px;position:relative;z-index:2;}
+.divider{width:280px;height:1px;background:linear-gradient(90deg,transparent,#7a5c1e,#f0c040,#7a5c1e,transparent);margin:6px auto 4px;position:relative;z-index:2;}
+.subtitle{font-size:10px;color:#9a6a2a;letter-spacing:0.25em;text-transform:uppercase;text-align:center;margin-bottom:1.25rem;position:relative;z-index:2;}
+.canvas-wrap{position:relative;z-index:2;margin-bottom:1.25rem;}
+.glow{position:absolute;border-radius:50%;pointer-events:none;transition:box-shadow 0.4s;top:-10px;left:-10px;right:-10px;bottom:-10px;box-shadow:0 0 28px 5px rgba(200,60,10,0.18);}
+.glow.on{box-shadow:0 0 60px 18px rgba(240,120,10,0.6),0 0 110px 28px rgba(200,40,5,0.3);}
+.btn-row{display:flex;align-items:center;gap:16px;z-index:2;margin-bottom:1.25rem;}
+.drop-btn{font-family:'Cinzel',serif;font-size:15px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;padding:13px 52px;background:linear-gradient(135deg,#8b0000 0%,#c0392b 50%,#8b0000 100%);color:#f0c040;border:1.5px solid #f0c040;border-radius:4px;cursor:pointer;position:relative;transition:all 0.2s;text-shadow:0 0 8px rgba(240,160,20,0.5);box-shadow:0 0 14px rgba(200,0,0,0.4);}
+.drop-btn::before{content:'✦';position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:10px;color:#f0c040;}
+.drop-btn::after{content:'✦';position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:10px;color:#f0c040;}
+.drop-btn:hover:not(:disabled){background:linear-gradient(135deg,#a00000 0%,#e74c3c 50%,#a00000 100%);box-shadow:0 0 24px rgba(220,0,0,0.6);transform:translateY(-1px);}
+.drop-btn:active:not(:disabled){transform:scale(0.98);}
+.drop-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.icon-btn{background:transparent;border:1px solid #5a3c10;border-radius:4px;color:#9a6a2a;font-size:16px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color 0.2s,color 0.2s;flex-shrink:0;}
+.icon-btn:hover{border-color:#f0c040;color:#f0c040;}
+.icon-btn.active{border-color:#7a5c1e;color:#f0c040;}
+.result{background:rgba(10,5,0,0.7);border:1px solid #7a5c1e;border-radius:8px;padding:1rem 1.5rem;max-width:540px;width:100%;text-align:center;min-height:82px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;z-index:2;}
+.result::before,.result::after{content:'◆';position:absolute;top:50%;transform:translateY(-50%);color:#7a5c1e;font-size:10px;}
+.result::before{left:10px;}.result::after{right:10px;}
+.rl{font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#7a5c1e;margin-bottom:5px;}
+.rn{font-family:'Cinzel Decorative',serif;font-size:17px;font-weight:700;color:#f0c040;text-shadow:0 0 12px rgba(240,160,20,0.6);margin-bottom:4px;}
+.rd{font-size:12px;color:#b89a5a;line-height:1.6;}
+.rb{font-size:10px;color:#5a3c10;margin-top:8px;letter-spacing:0.1em;}
+.phase-label{font-size:10px;color:#5a3c10;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.5rem;min-height:14px;z-index:2;}
+#yt-player{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;top:0;left:0;}
+</style>
+</head>
+<body>
+
+<div class="root">
+  <div class="corner tl"><svg viewBox="0 0 60 60" fill="none"><path d="M5 5L25 5L25 8L8 8L8 25L5 25Z" fill="#7a5c1e"/><line x1="5" y1="5" x2="22" y2="5" stroke="#f0c040" stroke-width="0.5"/><line x1="5" y1="5" x2="5" y2="22" stroke="#f0c040" stroke-width="0.5"/><circle cx="5" cy="5" r="2" fill="#f0c040"/></svg></div>
+  <div class="corner tr"><svg viewBox="0 0 60 60" fill="none"><path d="M5 5L25 5L25 8L8 8L8 25L5 25Z" fill="#7a5c1e"/><line x1="5" y1="5" x2="22" y2="5" stroke="#f0c040" stroke-width="0.5"/><line x1="5" y1="5" x2="5" y2="22" stroke="#f0c040" stroke-width="0.5"/><circle cx="5" cy="5" r="2" fill="#f0c040"/></svg></div>
+  <div class="corner bl"><svg viewBox="0 0 60 60" fill="none"><path d="M5 5L25 5L25 8L8 8L8 25L5 25Z" fill="#7a5c1e"/><line x1="5" y1="5" x2="22" y2="5" stroke="#f0c040" stroke-width="0.5"/><line x1="5" y1="5" x2="5" y2="22" stroke="#f0c040" stroke-width="0.5"/><circle cx="5" cy="5" r="2" fill="#f0c040"/></svg></div>
+  <div class="corner br"><svg viewBox="0 0 60 60" fill="none"><path d="M5 5L25 5L25 8L8 8L8 25L5 25Z" fill="#7a5c1e"/><line x1="5" y1="5" x2="22" y2="5" stroke="#f0c040" stroke-width="0.5"/><line x1="5" y1="5" x2="5" y2="22" stroke="#f0c040" stroke-width="0.5"/><circle cx="5" cy="5" r="2" fill="#f0c040"/></svg></div>
+
+  <div id="yt-player"></div>
+
+  <div class="title">Wheel of Wild Magic</div>
+  <div class="divider"></div>
+  <div class="subtitle">Scarlax's Gambit &nbsp;✦&nbsp; Barovian House of Chance</div>
+  <div class="phase-label" id="phaseLabel">Wheel is spinning — drop the ball when ready</div>
+
+  <div class="canvas-wrap">
+    <div class="glow" id="glow"></div>
+    <canvas id="cv"></canvas>
+  </div>
+
+  <div class="btn-row">
+    <button class="icon-btn" id="sfxBtn" onclick="toggleSfx()" title="Toggle SFX">🔊</button>
+    <button class="drop-btn" id="dropBtn" onclick="dropBall()">Drop the Ball</button>
+    <button class="icon-btn" id="musicBtn" onclick="toggleMusic()" title="Toggle music">🎵</button>
+  </div>
+
+  <div class="result" id="result">
+    <div class="rl">Awaiting the Surge...</div>
+    <div class="rd" style="color:#5a3c10;font-size:11px;">The wheel spins eternally. Drop the ball to invoke chaos.</div>
+  </div>
+</div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+const SURGES=[
+  {name:"Fireball on Self",desc:"Fireball detonates centered on you."},
+  {name:"Magic Missiles",desc:"Magic Missile fires at 5th level."},
+  {name:"Levitation",desc:"Float 10 feet skyward for 1 minute."},
+  {name:"Polymorph Sheep",desc:"You become a sheep for 1 minute."},
+  {name:"Wild Teleport",desc:"Blink 60 ft in a random direction."},
+  {name:"Confetti & Deaf",desc:"Festive burst. Deafened next turn."},
+  {name:"Regain Spell Slot",desc:"Your lowest expended slot returns."},
+  {name:"Fear Pulse",desc:"Creatures within 30 ft may flee 1 min."},
+  {name:"Enlarge / Reduce",desc:"Grow enormous or shrink tiny for 1 min."},
+  {name:"Invisible!",desc:"Vanish until you act or 1 min passes."},
+  {name:"Grass Erupts",desc:"Grass sprouts in a 60-foot radius."},
+  {name:"Hair Recolors",desc:"Random hair color for 24 hours."},
+  {name:"Max Damage",desc:"Next spell deals maximum damage."},
+  {name:"Cast Slow",desc:"Slow manifests from you, no slot."},
+  {name:"Flumph Ally",desc:"A flumph helps until your next turn."},
+  {name:"Psychic Lightning",desc:"2d10 psychic + 2d10 lightning damage."},
+  {name:"Fog Cloud",desc:"Fog billows outward from you."},
+  {name:"Age Shift",desc:"Age 1d10 years older or younger."},
+  {name:"Grease Underfoot",desc:"Grease coats the ground beneath you."},
+  {name:"Inner Radiance",desc:"Shed bright light 30 ft for 1 min."},
+  {name:"Stutter Curse",desc:"Only stutter until your next turn."},
+  {name:"Rapid Healing",desc:"Regain 5 HP per turn for 1 min."},
+  {name:"Random Attacker",desc:"A hostile creature appears nearby."},
+  {name:"Planar Delivery",desc:"Strange object arrives from another plane."},
+  {name:"Truesight",desc:"See all illusions within 60 ft for 1 min."},
+  {name:"Ethereal Sight",desc:"See into Ethereal Plane 60 ft, 1 min."},
+  {name:"Forced Laughter",desc:"Nearest creature laughs helplessly 1 min."},
+  {name:"Petrification",desc:"Restrained — save or turn to stone 1 min."},
+  {name:"Free Telekinesis",desc:"Telekinesis, no slot, no concentration."},
+  {name:"Butterflies",desc:"Butterflies and petals burst 10-foot bloom."},
+  {name:"Turned Blue",desc:"Skin vivid blue until you cast or 24 hrs."},
+  {name:"Rhyme Curse",desc:"Only speak rhyming couplets for 1 hour."},
+  {name:"Thunder & Prone",desc:"4d10 thunder damage and fall prone."},
+  {name:"Hover Curse",desc:"Float 6 inches off the ground for 1 min."},
+  {name:"Vampiric Touch",desc:"Heal for half damage dealt for 1 min."},
+  {name:"Surge Immunity",desc:"Wild Magic can't touch you for 1 min."},
+  {name:"Ethereal Portal",desc:"Portal to Ethereal Plane opens 1 min."},
+  {name:"Cursed Shriek",desc:"Shriek — roll 1d6 for magical fallout."},
+  {name:"Stunned",desc:"Stunned until end of your next turn."},
+  {name:"Beast Form",desc:"Polymorph into CR 1 beast for 1 min."},
+  {name:"Double Range",desc:"Next spell fires at double range."},
+  {name:"Color Spray",desc:"Color Spray at 5th level, no slot."},
+  {name:"All Tongues",desc:"Speak all languages for 1 minute."},
+  {name:"Blinded",desc:"Darkness takes you until next turn ends."},
+  {name:"Mirror Images",desc:"Three duplicates, no slot expended."},
+  {name:"HP Max Halved",desc:"Max HP halved for 1 minute."},
+  {name:"Detect Thoughts",desc:"Read nearby minds, no slot needed."},
+  {name:"Modron Appears",desc:"A Modron materializes for 1 minute."},
+  {name:"Extra Action",desc:"Gain one additional action this turn."},
+  {name:"Roll Twice",desc:"Both effects take place simultaneously."},
+];
+
+const N=SURGES.length, SLICE=2*Math.PI/N;
+const SZ=530, cx=SZ/2, cy=SZ/2;
+const R_OUT=SZ/2-5, R_TRACK=R_OUT*0.875;
+const R_SLOTS_OUT=R_OUT*0.845, R_SLOTS_IN=R_OUT*0.52;
+const R_CONE=R_OUT*0.40, R_HUB=R_OUT*0.16;
+const R_BALL_REST=R_OUT*0.685;
+const WHEEL_SPEED=0.008;
+
+function slotColor(i){
+  if(i===0||i===24||i===49) return {bg:"#0d2a12",rim:"#2a7a3a",txt:"#50e870"};
+  return i%2===0?{bg:"#2e0606",rim:"#7a1a1a",txt:"#e06060"}:{bg:"#0a0a0a",rim:"#3a3020",txt:"#c8bc9a"};
+}
+
+const cv=document.getElementById("cv");
+cv.width=SZ; cv.height=SZ;
+const ctx=cv.getContext("2d");
+
+// Crest image
+const crestImg=new Image();
+crestImg.crossOrigin="anonymous";
+let crestLoaded=false;
+crestImg.onload=()=>{ crestLoaded=true; };
+crestImg.onerror=()=>{
+  const j=new Image();
+  j.crossOrigin="anonymous";
+  j.onload=()=>{ crestLoaded=true; crestImg.src=j.src; };
+  j.src="https://i.imgur.com/DMHHa2Y.jpg";
+};
+crestImg.src="https://i.imgur.com/DMHHa2Y.png";
+
+// ── Raven ────────────────────────────────────────────────
+let raven={active:false,x:0,y:0,dir:1,flapT:0,flapSpeed:0.25,scale:1,startX:0,startY:0,startTime:0,duration:2800,alpha:1};
+
+function drawRaven(rx,ry,s,wingAngle,alpha){
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  ctx.translate(rx,ry);
+  ctx.scale(s * raven.dir, s); // flip horizontally based on direction
+
+  // Body
+  ctx.fillStyle="#111";
+  ctx.beginPath();ctx.ellipse(0,0,18,10,-0.15,0,Math.PI*2);ctx.fill();
+
+  // Tail
+  ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(-26,-5);ctx.lineTo(-22,0);ctx.lineTo(-26,5);ctx.closePath();
+  ctx.fillStyle="#0a0a0a";ctx.fill();
+
+  // Head
+  ctx.beginPath();ctx.arc(16,-5,7,0,Math.PI*2);ctx.fillStyle="#111";ctx.fill();
+
+  // Beak
+  ctx.beginPath();ctx.moveTo(22,-6);ctx.lineTo(30,-5);ctx.lineTo(22,-3);ctx.closePath();
+  ctx.fillStyle="#2a2a2a";ctx.fill();
+
+  // Eye
+  ctx.beginPath();ctx.arc(19,-7,1.5,0,Math.PI*2);ctx.fillStyle="#fff";ctx.fill();
+  ctx.beginPath();ctx.arc(19.5,-7,0.7,0,Math.PI*2);ctx.fillStyle="#000";ctx.fill();
+
+  // Upper wing
+  ctx.save();ctx.rotate(-wingAngle*0.6);
+  ctx.beginPath();ctx.moveTo(0,-2);
+  ctx.bezierCurveTo(-8,-28-wingAngle*18,16,-38-wingAngle*14,20,-22-wingAngle*10);
+  ctx.bezierCurveTo(10,-18,4,-10,0,-2);
+  ctx.fillStyle="#161616";ctx.fill();
+  ctx.strokeStyle="#222";ctx.lineWidth=0.5;
+  for(let f=0;f<4;f++){ctx.beginPath();ctx.moveTo(4+f*4,-10-f*5-wingAngle*8);ctx.lineTo(12-f,-16-f*5-wingAngle*11);ctx.stroke();}
+  ctx.restore();
+
+  // Lower wing
+  ctx.save();ctx.rotate(wingAngle*0.5);
+  ctx.beginPath();ctx.moveTo(0,2);
+  ctx.bezierCurveTo(-8,24+wingAngle*14,14,34+wingAngle*12,18,20+wingAngle*8);
+  ctx.bezierCurveTo(10,14,4,8,0,2);
+  ctx.fillStyle="#181818";ctx.fill();
+  ctx.restore();
+
+  // Iridescent sheen
+  ctx.beginPath();ctx.ellipse(2,-3,10,5,-0.2,0,Math.PI*2);
+  ctx.fillStyle="rgba(80,60,160,0.08)";ctx.fill();
+
+  ctx.restore();
+}
+
+function launchRaven(){
+  raven.dir = Math.random()>0.5 ? 1 : -1;
+  raven.startX = cx;
+  raven.startY = cy - R_OUT*0.5;
+  raven.x = raven.startX;
+  raven.y = raven.startY;
+  raven.flapT = 0;
+  raven.flapSpeed = 0.22+Math.random()*0.08;
+  raven.scale = 0.85+Math.random()*0.2;
+  raven.startTime = performance.now();
+  raven.duration = 2600+Math.random()*600;
+  raven.alpha = 1;
+  raven.active = true;
+}
+
+// ── Audio ────────────────────────────────────────────────
+let sfxOn=true, musicOn=false, ytPlayer=null, ytReady=false;
+let audioCtx=null, musicStarted=false, lastTime=0;
+
+function getAC(){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+function tone(freq,type,vol,dur,delay){
+  if(!sfxOn) return;
+  try{
+    const a=getAC(),o=a.createOscillator(),g=a.createGain();
+    o.connect(g);g.connect(a.destination);
+    o.type=type;o.frequency.value=freq;
+    const t=a.currentTime+(delay||0);
+    g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+    o.start(t);o.stop(t+dur+0.01);
+  }catch(e){}
+}
+function playTick(){ tone(300+Math.random()*80,'triangle',0.10,0.055); }
+function playBallTick(){ tone(850+Math.random()*150,'sine',0.07,0.04); }
+function playDrop(){
+  if(!sfxOn) return;
+  try{
+    const a=getAC(),o=a.createOscillator(),g=a.createGain();
+    o.connect(g);g.connect(a.destination);
+    o.type='sine';
+    o.frequency.setValueAtTime(700,a.currentTime);
+    o.frequency.exponentialRampToValueAtTime(160,a.currentTime+0.45);
+    g.gain.setValueAtTime(0.2,a.currentTime);g.gain.exponentialRampToValueAtTime(0.001,a.currentTime+0.5);
+    o.start(a.currentTime);o.stop(a.currentTime+0.55);
+  }catch(e){}
+}
+function playCaw(delay){
+  if(!sfxOn) return;
+  try{
+    const a=getAC();
+    const t0=a.currentTime+(delay||0);
+    function cawPulse(startT,pitchBase,vol,dur){
+      const o=a.createOscillator(),dist=a.createWaveShaper(),g=a.createGain();
+      const curve=new Float32Array(256);
+      for(let i=0;i<256;i++){const x=(i*2/256)-1;curve[i]=(Math.PI+280)*x/(Math.PI+280*Math.abs(x));}
+      dist.curve=curve;dist.oversample='4x';
+      o.connect(dist);dist.connect(g);g.connect(a.destination);
+      o.type='sawtooth';
+      o.frequency.setValueAtTime(pitchBase,startT);
+      o.frequency.linearRampToValueAtTime(pitchBase*0.72,startT+dur*0.6);
+      o.frequency.linearRampToValueAtTime(pitchBase*0.55,startT+dur);
+      g.gain.setValueAtTime(0,startT);g.gain.linearRampToValueAtTime(vol,startT+0.02);
+      g.gain.setValueAtTime(vol,startT+dur*0.5);g.gain.exponentialRampToValueAtTime(0.001,startT+dur);
+      o.start(startT);o.stop(startT+dur+0.05);
+      const buf=a.createBuffer(1,a.sampleRate*dur,a.sampleRate);
+      const d=buf.getChannelData(0);
+      for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*0.3;
+      const ns=a.createBufferSource(),ng=a.createGain();
+      ns.buffer=buf;ns.connect(ng);ng.connect(a.destination);
+      ng.gain.setValueAtTime(vol*0.18,startT);ng.gain.exponentialRampToValueAtTime(0.001,startT+dur);
+      ns.start(startT);ns.stop(startT+dur+0.05);
+    }
+    cawPulse(t0,420,0.22,0.28);
+    cawPulse(t0+0.35,390,0.18,0.24);
+    cawPulse(t0+0.68,360,0.10,0.20);
+  }catch(e){}
+}
+function playFanfare(){
+  [523,659,784,1047].forEach((f,i)=>tone(f,'triangle',0.11,0.35,i*0.13));
+  tone(55,'sawtooth',0.04,0.7,0);
+  playCaw(0.08);
+}
+function toggleSfx(){
+  sfxOn=!sfxOn;
+  const btn=document.getElementById("sfxBtn");
+  btn.textContent=sfxOn?"🔊":"🔇";
+  btn.classList.toggle("active",sfxOn);
+}
+
+// ── YouTube ──────────────────────────────────────────────
+window.onYouTubeIframeAPIReady=function(){
+  try{
+    ytPlayer=new YT.Player('yt-player',{
+      videoId:'QoydhH3xODU',
+      playerVars:{autoplay:1,mute:1,loop:1,playlist:'QoydhH3xODU',controls:0,disablekb:1,fs:0,modestbranding:1,playsinline:1},
+      events:{
+        onReady:(e)=>{
+          ytReady=true;
+          e.target.mute();
+          e.target.playVideo();
+          // In a real browser tab we can auto-unmute immediately
+          setTimeout(()=>{
+            try{ e.target.unMute(); e.target.setVolume(60); musicOn=true;
+              document.getElementById("musicBtn").classList.add("active"); }catch(ex){}
+          }, 800);
+        },
+        onStateChange:(e)=>{ if(e.data===YT.PlayerState.ENDED) ytPlayer.playVideo(); }
+      }
+    });
+  }catch(err){}
+};
+
+function toggleMusic(){
+  if(!ytReady) return;
+  try{
+    const btn=document.getElementById("musicBtn");
+    if(!musicOn){
+      ytPlayer.unMute();ytPlayer.setVolume(60);ytPlayer.playVideo();
+      musicOn=true;musicStarted=true;btn.classList.add("active");
+    } else {
+      ytPlayer.pauseVideo();musicOn=false;btn.classList.remove("active");
+    }
+  }catch(e){}
+}
+
+// ── Wheel ────────────────────────────────────────────────
+let wAngle=0, bAngle=0, bRadius=R_TRACK;
+let phase="idle", dropT0=0, destIdx=0, lastTick=-1, raf=null;
+
+function easeOut4(t){ return 1-Math.pow(1-t,4); }
+function easeInOut3(t){ return t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2; }
+
+function drawCrest(x,y,size,alpha){
+  ctx.save();ctx.globalAlpha=alpha;
+  if(crestLoaded){
+    ctx.drawImage(crestImg,x-size/2,y-size/2,size,size);
+    ctx.globalCompositeOperation="screen";ctx.globalAlpha=alpha*0.15;
+    ctx.fillStyle="#f0c040";ctx.beginPath();ctx.arc(x,y,size/2,0,Math.PI*2);ctx.fill();
+  } else {
+    ctx.font=`bold ${size*0.75}px serif`;ctx.fillStyle="#f0c04099";
+    ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.shadowColor="#f0c040";ctx.shadowBlur=size*0.3;
+    ctx.fillText("𝕾",x,y);
+  }
+  ctx.restore();
+}
+
+function draw(ts){
+  ctx.clearRect(0,0,SZ,SZ);
+
+  ctx.beginPath();ctx.arc(cx,cy,R_OUT+3,0,Math.PI*2);ctx.fillStyle="#080808";ctx.fill();
+  ctx.beginPath();ctx.arc(cx,cy,R_OUT,0,Math.PI*2);ctx.strokeStyle="#f0c040";ctx.lineWidth=3;ctx.stroke();
+
+  ctx.beginPath();ctx.arc(cx,cy,R_TRACK,0,Math.PI*2);ctx.strokeStyle="#261500";ctx.lineWidth=20;ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,R_TRACK-10,0,Math.PI*2);ctx.strokeStyle="#f0c04028";ctx.lineWidth=1;ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,R_TRACK+10,0,Math.PI*2);ctx.strokeStyle="#f0c04018";ctx.lineWidth=1;ctx.stroke();
+
+  for(let i=0;i<N;i++){
+    const a0=wAngle+i*SLICE,a1=a0+SLICE,col=slotColor(i);
+    ctx.beginPath();ctx.arc(cx,cy,R_SLOTS_OUT,a0,a1);ctx.arc(cx,cy,R_SLOTS_IN,a1,a0,true);ctx.closePath();
+    ctx.fillStyle=col.bg;ctx.fill();ctx.strokeStyle=col.rim+"55";ctx.lineWidth=0.5;ctx.stroke();
+    const mid=a0+SLICE/2;
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(mid);
+    const txt=SURGES[i].name,avail=(R_SLOTS_OUT-R_SLOTS_IN)*0.88;
+    const fs=Math.min(9,Math.max(6,avail/txt.length*1.52));
+    ctx.font=`500 ${fs}px 'Cinzel',serif`;ctx.fillStyle=col.txt;
+    ctx.textBaseline="middle";ctx.textAlign="right";ctx.shadowColor=col.txt;ctx.shadowBlur=3;
+    ctx.fillText(txt,(R_SLOTS_OUT+R_SLOTS_IN)*0.5+avail*0.48,0,avail);
+    ctx.restore();
+  }
+  ctx.beginPath();ctx.arc(cx,cy,R_SLOTS_OUT,0,Math.PI*2);ctx.strokeStyle="#f0c040";ctx.lineWidth=1.5;ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,R_SLOTS_IN,0,Math.PI*2);ctx.strokeStyle="#f0c040";ctx.lineWidth=1.5;ctx.stroke();
+
+  const cg=ctx.createRadialGradient(cx,cy,R_HUB,cx,cy,R_CONE);
+  cg.addColorStop(0,"#231000");cg.addColorStop(1,"#0c0600");
+  ctx.beginPath();ctx.arc(cx,cy,R_CONE,0,Math.PI*2);ctx.fillStyle=cg;ctx.fill();
+
+  for(let i=0;i<8;i++){
+    const a=wAngle+i*Math.PI/4;
+    ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*R_HUB*1.5,cy+Math.sin(a)*R_HUB*1.5);
+    ctx.lineTo(cx+Math.cos(a)*R_CONE*0.93,cy+Math.sin(a)*R_CONE*0.93);
+    ctx.strokeStyle="#f0c04060";ctx.lineWidth=1;ctx.stroke();
+    ctx.save();ctx.translate(cx+Math.cos(a)*R_CONE*0.87,cy+Math.sin(a)*R_CONE*0.87);ctx.rotate(a);
+    ctx.fillStyle="#f0c040";ctx.beginPath();ctx.moveTo(0,-3.5);ctx.lineTo(2.5,0);ctx.lineTo(0,3.5);ctx.lineTo(-2.5,0);ctx.closePath();ctx.fill();
+    ctx.restore();
+  }
+
+  const hg=ctx.createRadialGradient(cx-5,cy-5,1,cx,cy,R_HUB);
+  hg.addColorStop(0,"#3a1500");hg.addColorStop(1,"#0d0500");
+  ctx.beginPath();ctx.arc(cx,cy,R_HUB,0,Math.PI*2);ctx.fillStyle=hg;ctx.fill();
+  ctx.strokeStyle="#f0c040";ctx.lineWidth=2;ctx.stroke();
+  drawCrest(cx,cy,R_HUB*2*0.82,0.92);
+
+  if(phase!=="idle"){
+    const bx=cx+Math.cos(bAngle)*bRadius,by=cy+Math.sin(bAngle)*bRadius;
+    ctx.beginPath();ctx.arc(bx+1.5,by+2,7.5,0,Math.PI*2);ctx.fillStyle="rgba(0,0,0,0.45)";ctx.fill();
+    const bg2=ctx.createRadialGradient(bx-2.5,by-2.5,1,bx,by,7.5);
+    bg2.addColorStop(0,"#ffffff");bg2.addColorStop(0.45,"#e8e0d0");bg2.addColorStop(1,"#908070");
+    ctx.beginPath();ctx.arc(bx,by,7.5,0,Math.PI*2);ctx.fillStyle=bg2;ctx.fill();
+    drawCrest(bx,by,11,0.75);
+    ctx.beginPath();ctx.arc(bx-2.5,by-2.5,2.2,0,Math.PI*2);ctx.fillStyle="rgba(255,255,255,0.55)";ctx.fill();
+    if(phase==="done"){ctx.beginPath();ctx.arc(bx,by,11,0,Math.PI*2);ctx.strokeStyle="#f0c04077";ctx.lineWidth=2;ctx.stroke();}
+  }
+
+  if(raven.active && ts!==undefined){
+    const elapsed=ts-raven.startTime;
+    const t=Math.min(elapsed/raven.duration,1);
+    const ex=1-Math.pow(1-t,2.5);
+    const px=raven.startX+raven.dir*ex*320;
+    const py=raven.startY-ex*180+Math.sin(ex*Math.PI)*(-60);
+    raven.flapT+=raven.flapSpeed*(1-t*0.5);
+    const wingAngle=Math.sin(raven.flapT)*0.7;
+    const sc=raven.scale*(1-t*0.55);
+    const alpha=t>0.8?1-(t-0.8)/0.2:1;
+    drawRaven(px,py,sc,wingAngle,alpha);
+    if(t>=1) raven.active=false;
+  }
+}
+
+function loop(ts){
+  const dt=Math.min(ts-lastTime,50)/16.67;
+  lastTime=ts;
+  wAngle+=WHEEL_SPEED*dt;
+
+  if(phase==="idle"){
+    bAngle-=0.018*dt; bRadius=R_TRACK;
+    const rel=((bAngle-wAngle)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+    const ti=Math.floor(rel/SLICE)%N;
+    if(ti!==lastTick){playTick();lastTick=ti;}
+  } else if(phase==="dropping"){
+    const DROP_DUR=4200;
+    const t=Math.min((ts-dropT0)/DROP_DUR,1);
+    const orbitSpeed=-0.06*(1-easeOut4(t));
+    bAngle+=orbitSpeed*dt;
+    bRadius=R_TRACK+(R_BALL_REST-R_TRACK)*easeInOut3(t);
+    if(t>0.82){const bt=(t-0.82)/0.18;bRadius+=Math.sin(bt*Math.PI*4)*(1-bt)*4;}
+    const rel=((bAngle-wAngle)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+    const ti=Math.floor(rel/SLICE)%N;
+    if(ti!==lastTick){playBallTick();lastTick=ti;}
+    if(t>=1){
+      const finalRel=destIdx*SLICE+SLICE/2;
+      bAngle=wAngle+finalRel; bRadius=R_BALL_REST;
+      phase="done";
+      document.getElementById("glow").classList.remove("on");
+      document.getElementById("dropBtn").disabled=false;
+      document.getElementById("dropBtn").textContent="Drop the Ball";
+      document.getElementById("phaseLabel").textContent="Wheel is spinning — drop the ball when ready";
+      playFanfare();
+      launchRaven();
+      const s=SURGES[destIdx];
+      document.getElementById("result").innerHTML=
+        `<div class="rl">✦ Wild Magic Surge ✦</div>
+         <div class="rn">${s.name}</div>
+         <div class="rd">${s.desc}</div>
+         <div class="rb">Fate has spoken</div>`;
+    }
+  } else if(phase==="done"){
+    const finalRel=destIdx*SLICE+SLICE/2;
+    bAngle=wAngle+finalRel; bRadius=R_BALL_REST;
+  }
+
+  draw(ts);
+  raf=requestAnimationFrame(loop);
+}
+
+function dropBall(){
+  if(phase==="dropping") return;
+  phase="dropping"; dropT0=performance.now(); lastTick=-1;
+  destIdx=Math.floor(Math.random()*N);
+  document.getElementById("glow").classList.add("on");
+  document.getElementById("dropBtn").disabled=true;
+  document.getElementById("dropBtn").textContent="Rolling...";
+  document.getElementById("phaseLabel").textContent="The ball descends...";
+  document.getElementById("result").innerHTML=`<div class="rl">The ball rolls...</div><div class="rd" style="color:#5a3c10;font-size:11px;">Chaos stirs in the mists of Barovia...</div>`;
+  playDrop();
+}
+
+phase="idle";
+bAngle=Math.random()*Math.PI*2;
+lastTime=performance.now();
+raf=requestAnimationFrame(loop);
+</script>
+</body>
+</html>
