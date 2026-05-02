@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oracle of Selûne — The Moonlit Codex</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@400;700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --midnight:#04091a;--deep-navy:#080f24;--navy:#0d1a3a;
+  --moonsilver:#c8d8f0;--silver:#a8c0e0;--pale-silver:#e8f0ff;
+  --gold:#c8a84b;--gold-dim:#7a6028;--starwhite:#f0f4ff;
+  --mist:#1a2540;
+}
+html,body{min-height:100vh;background:var(--midnight);font-family:'IM Fell English',serif;color:var(--moonsilver);overflow-x:hidden;}
+#stars{position:fixed;inset:0;pointer-events:none;z-index:0;}
+.page-wrap{position:relative;z-index:1;max-width:800px;margin:0 auto;padding:2.5rem 1.5rem 4rem;display:flex;flex-direction:column;align-items:center;gap:2.5rem;}
+
+/* Header */
+.header{text-align:center;}
+#moonCanvas{display:block;margin:0 auto 1rem;}
+.title{font-family:'Cinzel Decorative',serif;font-size:26px;font-weight:700;color:var(--pale-silver);text-shadow:0 0 24px rgba(160,200,255,0.8),0 0 60px rgba(100,150,255,0.4);letter-spacing:0.08em;line-height:1.2;margin-bottom:6px;}
+.subtitle{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.28em;text-transform:uppercase;color:var(--gold-dim);}
+.divider{width:320px;height:1px;background:linear-gradient(90deg,transparent,var(--gold-dim),var(--pale-silver),var(--gold-dim),transparent);margin:10px auto;}
+.moon-phase-bar{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--silver);opacity:0.7;margin-top:4px;}
+
+/* Panels */
+.panel{width:100%;background:linear-gradient(160deg,rgba(8,15,36,0.96),rgba(4,9,26,0.99));border:1px solid rgba(168,192,224,0.18);border-radius:8px;padding:1.75rem 2rem;position:relative;box-shadow:0 0 40px rgba(80,120,220,0.07),inset 0 1px 0 rgba(200,220,255,0.05);}
+.panel::before,.panel::after{content:'✦';position:absolute;color:var(--gold-dim);font-size:10px;top:12px;}
+.panel::before{left:14px;}.panel::after{right:14px;}
+.panel-title{font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:1.25rem;text-align:center;}
+.corner-mark{position:absolute;width:36px;height:36px;opacity:0.28;}
+.corner-mark svg{width:100%;height:100%;}
+.cm-tl{top:6px;left:6px;}.cm-tr{top:6px;right:6px;transform:scaleX(-1);}.cm-bl{bottom:6px;left:6px;transform:scaleY(-1);}.cm-br{bottom:6px;right:6px;transform:scale(-1);}
+
+/* Oracle */
+.oracle-input{width:100%;background:rgba(4,9,26,0.8);border:1px solid rgba(168,192,224,0.22);border-radius:4px;color:var(--pale-silver);font-family:'IM Fell English',serif;font-size:15px;padding:0.85rem 1rem;resize:none;min-height:80px;line-height:1.6;transition:border-color 0.3s,box-shadow 0.3s;margin-bottom:1rem;}
+.oracle-input::placeholder{color:rgba(168,192,224,0.28);font-style:italic;}
+.oracle-input:focus{outline:none;border-color:rgba(168,192,224,0.45);box-shadow:0 0 18px rgba(100,150,255,0.1);}
+.oracle-btn{font-family:'Cinzel',serif;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;padding:10px 36px;background:transparent;color:var(--pale-silver);border:1px solid rgba(168,192,224,0.32);border-radius:4px;cursor:pointer;transition:all 0.25s;display:block;margin:0 auto;}
+.oracle-btn::before{content:'☽ '}.oracle-btn::after{content:' ☾'}
+.oracle-btn:hover:not(:disabled){border-color:var(--moonsilver);box-shadow:0 0 20px rgba(140,180,255,0.18);background:rgba(140,180,255,0.04);}
+.oracle-btn:disabled{opacity:0.35;cursor:not-allowed;}
+.oracle-response{margin-top:1.5rem;text-align:center;min-height:50px;}
+.oracle-text{font-family:'IM Fell English',serif;font-size:16px;font-style:italic;line-height:1.9;color:var(--pale-silver);text-shadow:0 0 12px rgba(140,180,255,0.25);opacity:0;transition:opacity 1.2s ease;}
+.oracle-text.vis{opacity:1;}
+.oracle-attrib{font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-dim);margin-top:0.75rem;opacity:0;transition:opacity 1.2s ease 0.5s;}
+.oracle-attrib.vis{opacity:1;}
+.oracle-stars{display:flex;justify-content:center;gap:6px;margin-bottom:0.75rem;opacity:0;transition:opacity 1s;}
+.oracle-stars.vis{opacity:1;}
+.oracle-star{color:var(--pale-silver);font-size:8px;animation:twinkle 2.5s infinite;}
+.oracle-star:nth-child(2){animation-delay:.4s}.oracle-star:nth-child(3){animation-delay:.8s}.oracle-star:nth-child(4){animation-delay:1.2s}.oracle-star:nth-child(5){animation-delay:1.6s}
+@keyframes twinkle{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+.oracle-thinking{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(168,192,224,0.35);animation:pulse 2s infinite;display:none;}
+.oracle-thinking.on{display:block;}
+@keyframes pulse{0%,100%{opacity:.25}50%{opacity:.75}}
+
+/* Book */
+.book-wrap{width:100%;display:flex;flex-direction:column;align-items:center;gap:1.25rem;}
+.book{width:600px;max-width:100%;height:420px;position:relative;transform-style:preserve-3d;}
+.book-spine{position:absolute;left:50%;top:0;bottom:0;width:16px;transform:translateX(-50%);background:linear-gradient(to right,#131f3a,#1e2f58,#131f3a);z-index:10;box-shadow:0 0 10px rgba(0,0,0,0.6);}
+.page{position:absolute;width:calc(50% - 8px);height:100%;background:linear-gradient(140deg,#0b1428,#08101e);border:1px solid rgba(168,192,224,0.12);overflow:hidden;display:flex;flex-direction:column;padding:1.4rem 1.2rem;}
+.page-left{left:0;border-radius:6px 0 0 6px;border-right:none;box-shadow:-4px 0 20px rgba(0,0,0,0.5);}
+.page-right{right:0;border-radius:0 6px 6px 0;border-left:none;box-shadow:4px 0 20px rgba(0,0,0,0.5);}
+.page-turning{position:absolute;width:calc(50% - 8px);height:100%;transform-origin:left center;transform-style:preserve-3d;z-index:20;left:calc(50% + 8px);}
+.page-turning.tfwd{animation:turnFwd 0.65s cubic-bezier(0.4,0,0.2,1) forwards;}
+.page-turning.tback{animation:turnBack 0.65s cubic-bezier(0.4,0,0.2,1) forwards;}
+@keyframes turnFwd{0%{transform:rotateY(0deg)}100%{transform:rotateY(-180deg)}}
+@keyframes turnBack{0%{transform:rotateY(-180deg)}100%{transform:rotateY(0deg)}}
+.page-front,.page-back{position:absolute;inset:0;backface-visibility:hidden;padding:1.4rem 1.2rem;background:linear-gradient(140deg,#0b1428,#08101e);border:1px solid rgba(168,192,224,0.12);overflow:hidden;}
+.page-back{transform:rotateY(180deg);}
+.page-hdr{font-family:'Cinzel',serif;font-size:8.5px;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:0.65rem;text-align:center;border-bottom:1px solid rgba(168,192,224,0.08);padding-bottom:0.45rem;}
+.page-body{font-family:'IM Fell English',serif;font-size:11.5px;line-height:1.72;color:rgba(200,216,240,0.82);flex:1;overflow:hidden;}
+.page-body em{color:var(--pale-silver);font-style:italic;}
+.page-body strong{color:var(--gold);font-style:normal;font-weight:normal;}
+.page-body .orn{text-align:center;color:var(--gold-dim);font-size:13px;margin:0.35rem 0;opacity:0.55;}
+.page-body .ref{font-family:'Cinzel',serif;font-size:8px;letter-spacing:0.1em;color:var(--gold-dim);opacity:0.7;}
+.page-body .spell-name{font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);display:block;margin-top:0.5rem;margin-bottom:0.15rem;}
+.page-body .prayer{font-style:italic;color:var(--pale-silver);display:block;margin-bottom:0.3rem;padding-left:0.6rem;border-left:1px solid rgba(168,192,224,0.15);}
+.page-num{font-family:'Cinzel',serif;font-size:8px;color:var(--gold-dim);text-align:center;margin-top:0.45rem;letter-spacing:0.15em;}
+.book-nav{display:flex;align-items:center;gap:20px;}
+.bnav-btn{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;background:transparent;color:var(--silver);border:1px solid rgba(168,192,224,0.18);border-radius:4px;padding:7px 18px;cursor:pointer;transition:all 0.2s;}
+.bnav-btn:hover:not(:disabled){border-color:var(--moonsilver);color:var(--starwhite);box-shadow:0 0 12px rgba(140,180,255,0.12);}
+.bnav-btn:disabled{opacity:0.2;cursor:not-allowed;}
+.bpage-ind{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.15em;color:var(--gold-dim);min-width:90px;text-align:center;}
+
+/* TOC nav */
+.toc-wrap{width:100%;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:0.5rem;}
+.toc-btn{font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;background:transparent;color:var(--silver);border:1px solid rgba(168,192,224,0.15);border-radius:3px;padding:5px 12px;cursor:pointer;transition:all 0.2s;}
+.toc-btn:hover,.toc-btn.active{border-color:rgba(168,192,224,0.45);color:var(--pale-silver);background:rgba(140,180,255,0.05);}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<div class="page-wrap">
+
+  <div class="header">
+    <canvas id="moonCanvas" width="80" height="80"></canvas>
+    <div class="title">Oracle of Selûne</div>
+    <div class="divider"></div>
+    <div class="subtitle">The Moonlit Codex &nbsp;✦&nbsp; Our Lady of Silver</div>
+    <div class="moon-phase-bar" id="moonPhaseBar">seeking the moon's face...</div>
+  </div>
+
+  <!-- Oracle -->
+  <div class="panel" style="max-width:640px;">
+    <div class="corner-mark cm-tl"><svg viewBox="0 0 40 40" fill="none"><path d="M3 3L18 3L18 6L6 6L6 18L3 18Z" fill="#c8a84b"/><line x1="3" y1="3" x2="16" y2="3" stroke="#c8a84b" stroke-width="0.5"/><line x1="3" y1="3" x2="3" y2="16" stroke="#c8a84b" stroke-width="0.5"/></svg></div>
+    <div class="corner-mark cm-tr"><svg viewBox="0 0 40 40" fill="none"><path d="M3 3L18 3L18 6L6 6L6 18L3 18Z" fill="#c8a84b"/><line x1="3" y1="3" x2="16" y2="3" stroke="#c8a84b" stroke-width="0.5"/><line x1="3" y1="3" x2="3" y2="16" stroke="#c8a84b" stroke-width="0.5"/></svg></div>
+    <div class="corner-mark cm-bl"><svg viewBox="0 0 40 40" fill="none"><path d="M3 3L18 3L18 6L6 6L6 18L3 18Z" fill="#c8a84b"/><line x1="3" y1="3" x2="16" y2="3" stroke="#c8a84b" stroke-width="0.5"/><line x1="3" y1="3" x2="3" y2="16" stroke="#c8a84b" stroke-width="0.5"/></svg></div>
+    <div class="corner-mark cm-br"><svg viewBox="0 0 40 40" fill="none"><path d="M3 3L18 3L18 6L6 6L6 18L3 18Z" fill="#c8a84b"/><line x1="3" y1="3" x2="16" y2="3" stroke="#c8a84b" stroke-width="0.5"/><line x1="3" y1="3" x2="3" y2="16" stroke="#c8a84b" stroke-width="0.5"/></svg></div>
+    <div class="panel-title">Seek the Moonmaiden's Counsel</div>
+    <textarea class="oracle-input" id="oracleInput" placeholder="Speak your question into the silver light..." rows="3"></textarea>
+    <button class="oracle-btn" id="oracleBtn" onclick="askOracle()">Pray to Selûne</button>
+    <div class="oracle-response">
+      <div class="oracle-thinking" id="oracleThinking">The moonlight stirs...</div>
+      <div class="oracle-stars" id="oracleStars"><span class="oracle-star">✦</span><span class="oracle-star">★</span><span class="oracle-star">✦</span><span class="oracle-star">★</span><span class="oracle-star">✦</span></div>
+      <div class="oracle-text" id="oracleText"></div>
+      <div class="oracle-attrib" id="oracleAttrib">— Selûne, Our Lady of Silver</div>
+    </div>
+  </div>
+
+  <!-- Prayerbook -->
+  <div class="panel" style="max-width:660px;padding:1.75rem 1.5rem;">
+    <div class="panel-title">The Moonlit Codex</div>
+    <div class="toc-wrap" id="tocWrap"></div>
+    <div style="height:1rem;"></div>
+    <div class="book-wrap">
+      <div class="book" id="book">
+        <div class="book-spine"></div>
+        <div class="page page-left" id="pageLeft"></div>
+        <div class="page page-right" id="pageRight"></div>
+        <div class="page-turning" id="pageTurning">
+          <div class="page-front" id="ptFront"></div>
+          <div class="page-back" id="ptBack"></div>
+        </div>
+      </div>
+      <div class="book-nav">
+        <button class="bnav-btn" id="prevBtn" onclick="turnPage(-1)" disabled>◂ Prev</button>
+        <div class="bpage-ind" id="pageInd"></div>
+        <button class="bnav-btn" id="nextBtn" onclick="turnPage(1)">Next ▸</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Starfield ─────────────────────────────────────────────
+(()=>{
+  const c=document.getElementById('stars'),ctx=c.getContext('2d');
+  let stars=[];
+  function resize(){c.width=innerWidth;c.height=innerHeight;stars=[];for(let i=0;i<200;i++)stars.push({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.2+0.2,speed:.003+Math.random()*.008,phase:Math.random()*Math.PI*2});}
+  function draw(t){ctx.clearRect(0,0,c.width,c.height);stars.forEach(s=>{const a=.15+.6*((Math.sin(t*s.speed+s.phase)+1)/2);ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(220,235,255,${a})`;ctx.fill();});requestAnimationFrame(draw);}
+  window.addEventListener('resize',resize);resize();requestAnimationFrame(draw);
+})();
+
+// ── Moon ──────────────────────────────────────────────────
+function getMoonPhase(){const k=new Date(2000,0,6,18,14,0),n=new Date(),d=(n-k)/864e5,c=29.53058867;return((d%c)+c)%c;}
+function getMoonPhaseName(p){return p<1.85?"New Moon":p<7.38?"Waxing Crescent":p<9.22?"First Quarter":p<14.77?"Waxing Gibbous":p<16.61?"Full Moon":p<22.15?"Waning Gibbous":p<23.99?"Last Quarter":"Waning Crescent";}
+function drawMoon(){
+  const cv=document.getElementById('moonCanvas'),ctx=cv.getContext('2d'),p=getMoonPhase();
+  document.getElementById('moonPhaseBar').textContent=`${getMoonPhaseName(p)} · ${Math.round(p/29.53*100)}% cycle`;
+  ctx.clearRect(0,0,80,80);const cx=40,cy=40,r=30;
+  const glow=ctx.createRadialGradient(cx,cy,r*.5,cx,cy,r*1.6);glow.addColorStop(0,'rgba(180,210,255,0.14)');glow.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.beginPath();ctx.arc(cx,cy,r*1.6,0,Math.PI*2);ctx.fillStyle=glow;ctx.fill();
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle='#1a2545';ctx.fill();
+  const illum=p/29.53;
+  ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.clip();
+  if(illum<=.5){const xi=r*(1-4*illum);ctx.beginPath();ctx.arc(cx,cy,r,-Math.PI/2,Math.PI/2);ctx.bezierCurveTo(cx+xi,cy+r*.5,cx+xi,cy-r*.5,cx,cy-r);ctx.fillStyle='#c8d8f0';ctx.fill();}
+  else{const xi=r*(4*illum-3);ctx.beginPath();ctx.arc(cx,cy,r,Math.PI/2,-Math.PI/2);ctx.bezierCurveTo(cx+xi,cy-r*.5,cx+xi,cy+r*.5,cx,cy+r);ctx.fillStyle='#c8d8f0';ctx.fill();}
+  ctx.restore();
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='rgba(200,220,255,0.3)';ctx.lineWidth=1;ctx.stroke();
+  for(let i=0;i<5;i++){const a=-.4+i*.18,d=r+12+i*7,sx=cx+Math.cos(a)*d,sy=cy+Math.sin(a)*d;ctx.beginPath();ctx.arc(sx,sy,.8+i*.15,0,Math.PI*2);ctx.fillStyle=`rgba(200,220,255,${.8-i*.14})`;ctx.fill();}
+}
+drawMoon();setInterval(drawMoon,60000);
+
+// ── Prayerbook content ────────────────────────────────────
+// Each spread = {label, left:{hdr,body,num}, right:{hdr,body,num}}
+const SPREADS=[
+
+  // ── BOOK I: IN THE BEGINNING ──────────────────────────
+  {
+    label:"Book I",
+    left:{hdr:"The Moonlit Codex · Preface",body:`<em>Here is set down the sacred scripture of Our Lady of Silver, compiled from the visions, prayers, and testimonies of her servants across the ages of Faerûn. Let it be read by moonlight, or not at all.</em>
+<div class="orn">☽ ★ ☾</div>
+This Codex is divided into five books:
+<br><br>
+<strong>Book I</strong> — In the Beginning: the creation of light and dark.
+<br><strong>Book II</strong> — The Prophets: testimonies of the Called.
+<br><strong>Book III</strong> — The Dogma: doctrine of the faith.
+<br><strong>Book IV</strong> — Prayers of the Cantrip: words of lesser invocation.
+<br><strong>Book V</strong> — Prayers of Power: words of greater invocation.
+<br><br>
+<span class="ref">Compiled by the Oracles of the Moon, House of the Moon, Waterdeep. Copied faithfully under the light of a waxing gibbous, Year of the Gauntlet.</span>`,num:"i"},
+    right:{hdr:"Book I · In the Beginning · I",body:`Before light and dark had separated themselves, the crystal sphere of Faerûn was filled with dim, misty shadows — neither one thing nor the other, timeless and without form.
+<br><br>
+From this primordial essence, two goddesses arose as one arising becomes two: <strong>Selûne</strong>, who was light, and <strong>Shar</strong>, who was darkness. They were not enemies then. They were sisters. They were two hands of the same will.
+<br><br>
+Together they shaped the heavens. Together they breathed life into the world. Together they called forth <strong>Chauntea</strong>, the Earthmother, and Chauntea opened her eyes and looked upon what her mothers had made, and she wept with gratitude.
+<div class="orn">✦</div>
+<span class="ref">I:1 — The Book of Origins, as told at the House of the Moon</span>`,num:"ii"},
+  },
+  {
+    label:"Book I",
+    left:{hdr:"Book I · In the Beginning · II",body:`Chauntea, newly born, looked upon the world she inhabited and found it cold. She came before her mothers and she said: <em>"I am grateful. But those upon my skin cannot flourish in darkness. Give us warmth. Give us light that does not die."</em>
+<br><br>
+Shar refused. She loved the dark, and the dark was good, and she would not diminish what she had made.
+<br><br>
+But Selûne looked upon Chauntea and saw her need, and her heart was moved. She reached beyond the sphere of the world into a distant plane of fire, and she drew forth a flame, and she kindled a star, and she set it burning in the sky.
+<br><br>
+It was the sun.
+<div class="orn">✦</div>
+<span class="ref">I:2 — The Book of Origins</span>`,num:"iii"},
+    right:{hdr:"Book I · In the Beginning · III",body:`Shar saw the sun burning and she was wrathful. She began to erase all light and warmth that Selûne had made, for she had not been asked, and she had said no, and she had been refused.
+<br><br>
+Weakened and desperate, Selûne acted without hesitation. She tore a piece of her own divine essence free — a piece of herself — and she hurled it at her sister.
+<br><br>
+The essence tore through Shar, drawing some of Shar's darkness with it, and from the combination of light and dark, of sacrifice and violence, there arose a third being:
+<br><br>
+<strong>Mystryl</strong>, first goddess of magic, born of their war. Neither wholly light nor wholly dark.
+<div class="orn">☽</div>
+<em>"From what we lose in love," wrote the Silverstar Aumindra, "the world gains what it never knew it lacked."</em>
+<span class="ref">I:3</span>`,num:"iv"},
+  },
+  {
+    label:"Book I",
+    left:{hdr:"Book I · In the Beginning · IV",body:`And so the sisters were parted. Their war did not end — it has never ended, and it will not end while the world still turns and the moon still climbs the sky.
+<br><br>
+At every new moon, the darkness swallows Selûne whole. She is slain, each time, by her sister's hunger.
+<br><br>
+And yet she returns. She always returns — as a sliver, then a crescent, then a gibbous, then full and blazing silver, defiant.
+<br><br>
+This is the first and truest teaching of the faith:
+<br><br>
+<em>She dies. She rises. She is the moon. She will always rise again.</em>
+<div class="orn">☽ ★ ☾</div>
+<span class="ref">I:4 — Closing verse of the Book of Origins</span>`,num:"v"},
+    right:{hdr:"Book I · The Tears of Selûne",body:`Behind the moon, always, trail the Tears of Selûne — that cluster of stars that follows her across the sky on clear nights, never quite reaching her, never quite left behind.
+<br><br>
+The faithful disagree on their meaning. Some say they are tears of grief, shed at the moment of her sacrifice when she gave her essence away to birth magic. Some say they are tears of joy, for the world was saved.
+<br><br>
+The Moonbathed Ilara of Silverymoon, who wandered the North for forty years, wrote this:
+<br><br>
+<em>"I have watched her cross the sky from horizon to horizon. I believe the Tears are both. I believe she weeps because it was worth it, and because it cost her, and because she would do it again."</em>
+<div class="orn">✦</div>
+<span class="ref">Ilara of Silverymoon, The Northern Meditations, c. 1180 DR</span>`,num:"vi"},
+  },
+
+  // ── BOOK II: THE PROPHETS ─────────────────────────────
+  {
+    label:"Book II",
+    left:{hdr:"Book II · The Prophets · Preface",body:`These are the testimonies of those Called who walked most closely in the Moonmaiden's light. They were sailors and wanderers, healers and warriors, all of them marked by something the moon saw in them that they did not yet see in themselves.
+<br><br>
+<em>The Called are not the great of the world. They are the ones who looked up.</em>
+<div class="orn">☽</div>
+The prophets recorded here are:
+<br><br>
+<strong>Thessaly Mourne</strong> — the Navigator of Neverwinter
+<br><strong>Brother Varun</strong> — the Lycanthrope's Confessor
+<br><strong>Aumindra Silversong</strong> — Silverstar of Icewind Dale
+<br><strong>Caelindra the Twice-Drowned</strong> — sailor and oracle
+<br><strong>Orrath the Wanderer</strong> — the only man numbered among the great prophets
+<br><br>
+<span class="ref">Book II · Prophets of the Silver Moon</span>`,num:"vii"},
+    right:{hdr:"Book II · Thessaly Mourne · I",body:`<strong>Thessaly Mourne</strong> was born in Neverwinter to a family of navigators who steered by star charts her great-grandmother had drawn by hand. She was the fourth daughter, and the only one who looked at the stars not as tools but as company.
+<br><br>
+She took holy orders at nineteen. By thirty she was sailing the Sea of Fallen Stars alone, using only the moon for guidance — no charts, no compass, trusting what she called <em>"the silver pull."</em>
+<br><br>
+She was never lost. In forty years of sailing she never once failed to find harbor.
+<br><br>
+When asked how, she answered always the same way:
+<br><br>
+<em>"I do not navigate to Selûne. I navigate with her. There is a difference."</em>
+<span class="ref">Thessaly Mourne, The Silver Pull, c. 1230 DR</span>`,num:"viii"},
+  },
+  {
+    label:"Book II",
+    left:{hdr:"Book II · Thessaly Mourne · II",body:`On the night she finally came to port for the last time — old, white-haired, satisfied — Thessaly wrote in her log:
+<br><br>
+<em>"The moon has been my lantern in every dark water. She has never gone out. Even when I could not see her through cloud and storm, she was there behind it all, pulling the tide that rocked my hull, reminding me that the water knows which way is home even when the sailor has forgotten.</em>
+<br><br>
+<em>I have been afraid, yes. Many times. But I have never been lost. I do not think she will allow it."</em>
+<br><br>
+She died in harbor on a full moon night.
+<br><br>
+The tide was going out.
+<span class="ref">Thessaly Mourne, final log entry</span>`,num:"ix"},
+    right:{hdr:"Book II · Brother Varun · I",body:`<strong>Brother Varun</strong> was not born into the faith. He was born into lycanthropy — infected at twelve by a werewolf in the forests east of Baldur's Gate, dragged before the nearest temple of Selûne by a traveling cleric who saw what others missed: a boy, not a beast.
+<br><br>
+The temple cured him. He never left.
+<br><br>
+He devoted fifty years to the ministry of lycanthropes — both those who wished to be cured and those who did not. He was gentle with both. He believed, as the Moonmaiden teaches, that the beast is not a punishment but a test.
+<br><br>
+<em>"She gave the moon its pull over them," he wrote. "Not to mock them. To remind them. They are never alone in the change."</em>
+<span class="ref">Brother Varun of Baldur's Gate, Meditations on the Afflicted</span>`,num:"x"},
+  },
+  {
+    label:"Book II",
+    left:{hdr:"Book II · Brother Varun · II",body:`Brother Varun was the first to write down what has since become the standard catechism for those who come to the temple afflicted with lycanthropy:
+<br><br>
+<em>"The moon rose before you were born. The moon will rise long after you are gone. The change in you is not foreign — it is borrowed from something very old and very large. You have been given a piece of what moves the tides. It is a terrible gift. It is also a gift.</em>
+<br><br>
+<em>Selûne does not look away from you. She watches you most closely on the nights you fear yourself most. You are not abandoned. You are held."</em>
+<br><br>
+He died peacefully at eighty-one, under a waning crescent, surrounded by those he had helped.
+<span class="ref">Varun of Baldur's Gate, Catechism for the Afflicted</span>`,num:"xi"},
+    right:{hdr:"Book II · Aumindra Silversong",body:`<strong>Aumindra Silversong</strong> was a Silverstar who operated in the frozen reaches of Icewind Dale for thirty years, hunting the minions of Shar along the Dale's long winters.
+<br><br>
+She was known for two things: her silence, and her moonblade.
+<br><br>
+She rarely spoke. When she did, it was recorded. This is her most famous utterance, spoken to a young cleric who asked how to face Shar's followers without flinching:
+<br><br>
+<em>"Do not think about what you are walking toward. Think about what is walking with you. The moon does not put out her light because darkness is present. She simply keeps burning. Do the same."</em>
+<br><br>
+She disappeared in the Year of the Wave, 1364 DR. No body was ever found. The Shards say she ascended.
+<span class="ref">Aumindra Silversong, recorded sayings</span>`,num:"xii"},
+  },
+  {
+    label:"Book II",
+    left:{hdr:"Book II · Caelindra the Twice-Drowned",body:`<strong>Caelindra</strong> earned her epithet honestly: she drowned twice, once in the harbor of Baldur's Gate and once in the Trackless Sea, and she was pulled from the water both times by something she could never fully explain.
+<br><br>
+<em>"The second time, I was very far down,"</em> she wrote. <em>"Very cold. No light. And then there was light — not from above but from within the water itself, silver, like moonlight had followed me under. It did not pull me up. It simply waited with me until I decided to swim."</em>
+<br><br>
+She became one of the Oracles of the Moon and spent the rest of her life performing fortune-tellings for sailors before they put to sea.
+<br><br>
+She refused payment. She said Selûne had already paid her, twice over.
+<span class="ref">Caelindra the Twice-Drowned, as recorded by the Oracles of the Moon</span>`,num:"xiii"},
+    right:{hdr:"Book II · Orrath the Wanderer",body:`<strong>Orrath</strong> is the only man numbered among the great prophets of Selûne, a fact he found both amusing and humbling in equal measure.
+<br><br>
+He was a wanderer in the literal sense — he never stayed anywhere longer than one moon cycle. He walked every road in Faerûn, some of them twice, with nothing but a mace, a bedroll, and the moon above him.
+<br><br>
+He wrote no formal theology. He wrote a single prayer, which has since become the most widely spoken words in Selûne's faith after the goddess's own.
+<br><br>
+<em>Lady of Silver — I am not where I meant to be. But you can see me from where you are. That will have to be enough. Guide my next step. That is all I ask. Just the next one.</em>
+<br><br>
+<span class="ref">Orrath the Wanderer, The Wanderer's Prayer, date unknown</span>`,num:"xiv"},
+  },
+
+  // ── BOOK III: THE DOGMA ───────────────────────────────
+  {
+    label:"Book III",
+    left:{hdr:"Book III · The Dogma · The Words of the Goddess",body:`These are the words with which Selûne charges all novices upon their taking of orders:
+<div class="orn">☽</div>
+<em>Let all on whom my light falls be welcome, if they desire to be so.</em>
+<br><br>
+<em>As the silver moon waxes and wanes, so too does all life. Trust in my radiance, and know that all love alive under my light shall know my blessing.</em>
+<br><br>
+<em>Turn to the moon, and I will be your true guide.</em>
+<div class="orn">☽</div>
+And the common blessing of the priesthood:
+<br><br>
+<em>"May Selûne guide your steps in the night, and bring them to the new dawn."</em>`,num:"xv"},
+    right:{hdr:"Book III · The Dogma · The Five Principles",body:`The faithful are taught five principles, in order of their weight:
+<br><br>
+<strong>I. Welcome</strong> — Let all on whom her light falls be welcome. Turn away no one who comes in peace.
+<br><br>
+<strong>II. Acceptance</strong> — Promote tolerance. See all beings as equals under the moon.
+<br><br>
+<strong>III. Brotherhood</strong> — Aid all fellow Selûnites as if they were your dearest friend.
+<br><br>
+<strong>IV. Vigilance</strong> — Fight evil where it walks in the dark, particularly those who serve Shar.
+<br><br>
+<strong>V. Wandering</strong> — Go where the moon sends you. Do not plant yourself too deep to be moved.
+<div class="orn">✦</div>
+<em>"Anywhere the full moon shines is the place for Selûne."</em>`,num:"xvi"},
+  },
+  {
+    label:"Book III",
+    left:{hdr:"Book III · The Dogma · The Rites",body:`<strong>The Nightly Rite</strong> — Clerics pray at night, facing the direction of the moon when she is visible. In nightgloom, face the place where she last was.
+<br><br>
+<strong>The Full Moon Offering</strong> — On each full moon, milk and wine are poured upon an altar beneath open sky. A bowl of milk is set outside as welcome to any who pass in darkness.
+<br><br>
+<strong>The Night Stalk</strong> — An open-air dance and prayer under moonlight. Performed as often as circumstance allows.
+<br><br>
+<strong>The Mystery of the Night</strong> — An annual rite. The cleric is carried high into the night sky and communes with the goddess in deep trance.
+<div class="orn">☽</div>
+<em>"The ritual matters less than the turning of the face. Turn toward her. She will do the rest."</em>
+<span class="ref">Caelindra the Twice-Drowned</span>`,num:"xvii"},
+    right:{hdr:"Book III · The Dogma · The Conjuring",body:`<strong>The Conjuring of the Second Moon</strong> is performed every Shieldmeet, when every Selûnite temple in Faerûn joins in one great coordinated chant.
+<br><br>
+The chant calls forth the <strong>Shards</strong> — blue-haired female planetars, servants of the goddess, born of the divine tears she shed when she gave her essence away at the beginning of time.
+<br><br>
+The Shards serve the clergy for one night, most often battling the forces of Shar. At dawn, one mortal cleric is elevated to join their number.
+<br><br>
+<em>"They are the Tears, made solid," wrote Brother Varun. "She wept them at the cost of herself. They came back as warriors. I find this very Selûne."</em>
+<div class="orn">★</div>
+<span class="ref">Book III · The Holy Days</span>`,num:"xviii"},
+  },
+  {
+    label:"Book III",
+    left:{hdr:"Book III · The Ranks of the Called",body:`Within the church, titles ascend as follows:
+<br><br>
+<strong>Postulant</strong> — one who has expressed interest but not yet been taught.
+<br><strong>Novice / The Called</strong> — those who have answered the call.
+<br><strong>Runra</strong> — simple priest, admitted after a solo task.
+<br><strong>Alrunra</strong> · <strong>Tenembrae</strong> · <strong>Sartembrae</strong>
+<br><strong>Trintelrae</strong> — upper priest.
+<br><strong>Aumra</strong> — akin to a bishop; may "go moonglow."
+<br><strong>Calunala</strong> — senior oracle or warrior of the faith.
+<br><strong>Silverstar</strong> — elite specialty priests; defenders of the vulnerable.
+<br><strong>The Shards</strong> — the elevated: former mortals, now planetars.
+<div class="orn">☽</div>
+<em>"The hierarchy shifts with the phase of the moon, and other, less predictable phenomena."</em>`,num:"xix"},
+    right:{hdr:"Book III · On Shar",body:`Let it be set down plainly so that no novice is confused:
+<br><br>
+<strong>Shar is not merely an enemy. She is the reason the faith exists.</strong>
+<br><br>
+Selûne did not become the moon by accident. She became the moon because her sister would have extinguished every light, and someone had to remain lit.
+<br><br>
+The war between them is not fought in distant planes only. It is fought in the shadows that moonlight casts. It is fought in every person who chooses despair over hope, isolation over welcome, the void over the uncertain comfort of a borrowed light.
+<br><br>
+<em>"Do not hate Shar," wrote Aumindra. "Understand her. She is what you become if you let the losses define you rather than what you chose to do despite them."</em>
+<div class="orn">✦</div>
+<span class="ref">Book III · On the Nature of Darkness</span>`,num:"xx"},
+  },
+
+  // ── BOOK IV: CANTRIP PRAYERS ─────────────────────────
+  {
+    label:"Book IV",
+    left:{hdr:"Book IV · Prayers of the Cantrip · Preface",body:`These are the lesser invocations — the prayers of daily use, the words spoken in ordinary moments when the divine is not summoned in power but in breath, in habit, in the quiet discipline of remembrance.
+<br><br>
+<em>"Even a cantrip," wrote Thessaly Mourne, "is a prayer before it is a spell. The power is merely what the goddess lends to the sincerity."</em>
+<div class="orn">☽ ★ ☾</div>
+Speak them aloud, when possible, and face the moon.`,num:"xxi"},
+    right:{hdr:"Book IV · Guidance",body:`
+<span class="spell-name">Guidance</span>
+<span class="prayer">Lady of Silver, lay your light upon this path. My eyes are mortal; let me see with yours for just this moment.</span>
+<span class="prayer">Moonmaiden, I do not know which way to turn. Illuminate the choice that serves your will, and give my hand the steadiness to make it.</span>
+<span class="prayer">As navigators read the stars and sailors trust the tide, I trust your radiance. Guide me now. I will not close my eyes against the light.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Light</span>
+<span class="prayer">She Who Guides — where darkness has settled where it does not belong, let your light remember this place.</span>
+<span class="prayer">Moonmaiden, Shar makes her home in darkness unused. Let this place be used, and let your silver be the proof.</span>`,num:"xxii"},
+  },
+  {
+    label:"Book IV",
+    left:{hdr:"Book IV · Cantrips Continued",body:`
+<span class="spell-name">Sacred Flame</span>
+<span class="prayer">Lady of Silver, the moon is cold and her fires are old. Send me a piece of that ancient burning, that what cannot be healed may be ended cleanly.</span>
+<span class="prayer">Moonmaiden — Shar loves what endures in rot. Let your light fall here as fire: swift, pure, and final.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Spare the Dying</span>
+<span class="prayer">Our Lady, this one is not yet yours to keep. Hold back the dark tide a moment longer. I am still working.</span>
+<span class="prayer">She Who Returns — do not let the thread be cut before its time. The moon waxes yet; so may this life.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Thaumaturgy</span>
+<span class="prayer">Lady of Silver, let the world know a servant of the moon is here. Let your name be heard in this place.</span>`,num:"xxiii"},
+    right:{hdr:"Book IV · Cantrips Continued",body:`
+<span class="spell-name">Resistance</span>
+<span class="prayer">Moonmaiden, the night presses hard. Wrap this one in your light as in a cloak. Let what comes find the moon before it finds flesh.</span>
+<span class="prayer">As the tide resists the shore and returns again undimmed, so may this spirit resist what seeks to diminish it.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Toll the Dead</span>
+<span class="prayer">She who watches those who wander — this wanderer has lost their way. Let the bell mark where the road ended, and let them hear it in whatever dark they walk.</span>
+<span class="prayer">Moonmaiden, not all darkness should be filled with light. Some must simply be witnessed. Let the toll be the witness.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Word of Radiance</span>
+<span class="prayer">Lady of Silver, speak through me now. Let the words carry your light into every eye that refuses to close against it.</span>`,num:"xxiv"},
+  },
+
+  // ── BOOK V: SPELL PRAYERS LEVEL 1 ────────────────────
+  {
+    label:"Book V · 1st",
+    left:{hdr:"Book V · Prayers of Power · First Circle",body:`These are the invocations of the first circle of power — spoken when the need exceeds the daily, when the world asks more than habit can provide.
+<br><br>
+<em>"A first-circle prayer," Orrath wrote, "is the moment you admit you cannot do it alone. Which means it is among the most honest prayers of all."</em>
+<div class="orn">☽</div>
+<span class="spell-name">Bane</span>
+<span class="prayer">Lady of Silver, those who walk in Shar's shadow believe darkness shelters them. Let your light reach into their confidence and cool it. Let them remember the moon sees all.</span>
+<span class="prayer">Moonmaiden, these are enemies of your light. Diminish what they trust in themselves, as the new moon diminishes your face — temporarily, but completely.</span>`,num:"xxv"},
+    right:{hdr:"Book V · First Circle Continued",body:`<span class="spell-name">Bless</span>
+<span class="prayer">Our Lady, rest your hand on those who stand beside me. We are wanderers in a dark country. Let your light walk with us where our own eyes fail.</span>
+<span class="prayer">Moonmaiden — they have come this far by their own strength. Lend them yours now. Let the silver touch their actions and make of them something worthy of your watching.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Command</span>
+<span class="prayer">She Who Guides, your voice moves the tide. Move this one now. One word, one moment, one interruption of the darkness in their heart — that is all I ask.</span>
+<span class="prayer">Moonmaiden, speak through me. I will hold the word carefully. Let them hear in it something older than my own authority.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Create or Destroy Water</span>
+<span class="prayer">Lady of Silver, who holds dominion over every tide — gather what has scattered, or release what has gathered. Let the water obey as it has always obeyed the moon.</span>`,num:"xxvi"},
+  },
+  {
+    label:"Book V · 1st",
+    left:{hdr:"Book V · First Circle Continued",body:`<span class="spell-name">Cure Wounds</span>
+<span class="prayer">Moonmaiden, your tears made the Shards whole. Let a little of that making fall here. Knit this wound. The body is a road she still needs to walk.</span>
+<span class="prayer">Lady of Silver, the body is not the vessel but the wanderer. Do not let the wanderer fail before the journey is complete. Heal what the dark has opened.</span>
+<span class="prayer">She Who Returns — nothing you have claimed comes back diminished. Let this wound return to wholeness in your name.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Detect Evil and Good</span>
+<span class="prayer">Our Lady, your light shows the shape of what stands before us. Strip the shadow. Let me see what you see when you look down from the sky.</span>`,num:"xxvii"},
+    right:{hdr:"Book V · First Circle Continued",body:`<span class="spell-name">Detect Magic</span>
+<span class="prayer">Moonmaiden, your sister Mystryl was born of divine sacrifice. Magic is therefore your kin. Let me see where it moves in this place, as family recognizes family.</span>
+<span class="prayer">Lady of Silver, you have walked among the arcane since before it had a name. Show me what is lit with it here. I will not touch what I should not touch.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Detect Poison and Disease</span>
+<span class="prayer">She Who Guides — Shar's shadow takes many forms. Some are slow. Show me where rot has entered, that I may know its shape before it spreads.</span>
+<span class="prayer">Moonmaiden, your light finds what hides in the body as it finds what hides in the dark. Illuminate this; let nothing fester that need not fester.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Guiding Bolt</span>
+<span class="prayer">Lady of Silver, let your light strike first, and let it linger where it lands, that all who follow may see clearly what you have marked.</span>`,num:"xxviii"},
+  },
+  {
+    label:"Book V · 1st",
+    left:{hdr:"Book V · First Circle Continued",body:`<span class="spell-name">Healing Word</span>
+<span class="prayer">Moonmaiden, from across the dark — hear me. One word, swift as starlight, for this one who is falling. Let it reach them before they go too far.</span>
+<span class="prayer">Lady of Silver, you have guided sailors home by voice before. Call this one back to the body. One word. They will hear it if you say it.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Inflict Wounds</span>
+<span class="prayer">Our Lady, you are the moon in all her phases — not only the gentle one. Where Shar has sent her servants, let the full moon's cold fury answer them.</span>
+<span class="prayer">Moonmaiden, you were slain at every new moon for ten thousand years and still you rose. Do not ask me to be merciful to what has never showed it.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Protection from Evil and Good</span>
+<span class="prayer">She Who Guides, I call on your dominion over the night's true nature. The darkness that protects is yours. Wrap this one in it. Let what hunts them find the moon instead.</span>`,num:"xxix"},
+    right:{hdr:"Book V · First Circle Continued",body:`<span class="spell-name">Purify Food and Drink</span>
+<span class="prayer">Lady of Silver, what you look upon is made clean. Look upon this now. Let what would diminish become what sustains.</span>
+<span class="prayer">Moonmaiden, your light has blessed the milk placed in offering for a thousand years. Bless this as well. Let it nourish and not harm.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Sanctuary</span>
+<span class="prayer">She Who Guides, I give this one into your light. Let those with violence in their hearts see only you when they look this way, and let what they see give them pause.</span>
+<span class="prayer">Moonmaiden, you welcome all on whom your light falls. Let your welcome itself become a shield. None may strike what you have claimed as guest.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Shield of Faith</span>
+<span class="prayer">Lady of Silver, the faith is not merely belief. It is armor. Let it sit upon this one as silver plate, lit and unashamed.</span>`,num:"xxx"},
+  },
+
+  // ── LEVEL 2 ───────────────────────────────────────────
+  {
+    label:"Book V · 2nd",
+    left:{hdr:"Book V · Second Circle",body:`<em>"The second-circle prayers," wrote the Moonbathed Ilara, "are the ones you speak when the first try was not enough. They require more. They reveal more. They cost more of you to mean."</em>
+<div class="orn">☽</div>
+<span class="spell-name">Aid</span>
+<span class="prayer">Our Lady, the body is a measure of will made flesh. Expand the measure. Let these three carry more than they thought they could, for as long as they need to carry it.</span>
+<span class="prayer">Moonmaiden — the full moon shows more of herself, and the world is brighter for it. Let these ones do the same. Fill them beyond their ordinary brim.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Augury</span>
+<span class="prayer">Lady of Silver, Caelindra the Twice-Drowned stood before you waterlogged and shivering and asked: is this the right road? And you answered. Answer me now. Two words are enough. I can work with two words.</span>`,num:"xxxi"},
+    right:{hdr:"Book V · Second Circle Continued",body:`<span class="spell-name">Blindness / Deafness</span>
+<span class="prayer">Moonmaiden, your light is a gift freely given. Take back the gift. Let them stand in the dark they have chosen, for a time, that they might understand what it is to be without you.</span>
+<span class="prayer">Lady of Silver, close what is being used against your children. The eye that aims to harm, the ear that listens for secrets to weaponize — close them, gently, completely.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Calm Emotions</span>
+<span class="prayer">Moonmaiden, the tide does not rage. It moves with purpose. Let the storm in these hearts find that same purposeful quiet, even for a moment.</span>
+<span class="prayer">Lady of Silver, you are the thing that ancient sailors watched to stop fearing the dark. Let your presence work its same quiet work here, in this room, among these people.</span>`,num:"xxxii"},
+  },
+  {
+    label:"Book V · 2nd",
+    left:{hdr:"Book V · Second Circle Continued",body:`<span class="spell-name">Hold Person</span>
+<span class="prayer">She Who Guides — hold this one as the tide holds the shore: completely, temporarily, without malice, with purpose. I need a moment they cannot interrupt.</span>
+<span class="prayer">Lady of Silver, the moon stops the lycanthrope mid-transformation when her will is exerted. Exert your will here. Root this one where they stand.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Lesser Restoration</span>
+<span class="prayer">Moonmaiden, the moon does not carry forward the damage of her death into her rising. Let what this one carries — what was put into them against their will — fall away as nightgloom falls at dawn.</span>
+<span class="prayer">Lady of Silver, you were born whole from chaos and you returned whole after every slaying. Restore what was taken. The body remembers what it was before.</span>`,num:"xxxiii"},
+    right:{hdr:"Book V · Second Circle Continued",body:`<span class="spell-name">Prayer of Healing</span>
+<span class="prayer">Our Lady, I gather your light in both hands and press it into them — all of them. The wanderers who walk beside me deserve what I can give. Let it be enough.</span>
+<span class="prayer">Moonmaiden, you do not show your light to one traveler and hide it from another. Shine on all of us equally. We all need it equally. Heal us all.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Protection from Poison</span>
+<span class="prayer">Lady of Silver, Shar poisons what she cannot own. Show her she has reached no further than your light allows. Cleanse this poison. Protect against the next.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Silence</span>
+<span class="prayer">Moonmaiden, the moon makes no sound. She does not need to. Bring her kind of quiet here — the heavy, watchful silence that says something vast is paying attention.</span>`,num:"xxxiv"},
+  },
+  {
+    label:"Book V · 2nd",
+    left:{hdr:"Book V · Second Circle Continued",body:`<span class="spell-name">Spiritual Weapon</span>
+<span class="prayer">Our Lady, the Wand of Four Moons was your favored instrument and you wielded it without hesitation when Luna was taken from you. Give me something of that. Let your weapon fight beside me.</span>
+<span class="prayer">Moonmaiden, I am one person with one pair of hands. Lend me yours. Let silver strike where I cannot reach, shaped by your will, guided by your attention.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Warding Bond</span>
+<span class="prayer">Lady of Silver, I bind myself to this one as the moon binds herself to Toril's tide — in pull, in rhythm, in shared consequence. What strikes them finds me also. I accept this. Watch over us both.</span>`,num:"xxxv"},
+    right:{hdr:"Book V · Second Circle Continued",body:`<span class="spell-name">Zone of Truth</span>
+<span class="prayer">She Who Guides, your light makes the hidden visible. Let it fall into this space and into these mouths, so that what comes out of them has been passed through something that does not allow shadow.</span>
+<span class="prayer">Moonmaiden, you see all who stand in your light as they are, not as they present themselves. For a moment, let them see each other the same way.</span>
+<div class="orn">☽ ★ ☾</div>
+<em>"Truth," wrote Orrath the Wanderer, "is simply moonlight applied to the inside of a thing. It does not change what is there. It only makes it visible."</em>`,num:"xxxvi"},
+  },
+
+  // ── LEVEL 3 ───────────────────────────────────────────
+  {
+    label:"Book V · 3rd",
+    left:{hdr:"Book V · Third Circle",body:`<span class="spell-name">Animate Dead</span>
+<span class="prayer">Moonmaiden — I know this sits at the edge of what you celebrate. But the dead who serve the living in your name are not diminished. They are given one more road to walk. Let them walk it with purpose.</span>
+<span class="prayer">Lady of Silver, you are not the goddess of death, but you watch over what happens in the dark. Sanction this. Let these dead serve until they are no longer needed, and then let them rest.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Beacon of Hope</span>
+<span class="prayer">Our Lady, hope is a moon-word. It requires darkness to be meaningful. Let your light land on everyone present and let it mean something. Give them the will to receive what healing comes.</span>`,num:"xxxvii"},
+    right:{hdr:"Book V · Third Circle Continued",body:`<span class="spell-name">Bestow Curse</span>
+<span class="prayer">Lady of Silver, the moon's face changes. Not all of her phases are gentle ones. I ask now for a waning, and I ask it to fall on this one who has earned the dark side of your attention.</span>
+<span class="prayer">Moonmaiden — Aumindra asked for no mercy for Shar's servants. I ask for no more mercy than she did. Mark this one. Let them carry what they have made others carry.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Clairvoyance</span>
+<span class="prayer">She Who Guides, navigators trust the moonlight on distant water to know what lies ahead. Send my sight further than my eyes reach. Let me see the next horizon before I arrive at it.</span>`,num:"xxxviii"},
+  },
+  {
+    label:"Book V · 3rd",
+    left:{hdr:"Book V · Third Circle Continued",body:`<span class="spell-name">Create Food and Water</span>
+<span class="prayer">Moonmaiden, the faithful leave milk upon the altar and you fill it with meaning. Fill this now with sustenance. We are wanderers who have wandered too far from provision. Supply us as you have always supplied the lost.</span>
+<span class="prayer">Lady of Silver, Chauntea asked you for what her children needed to flourish, and you did not hesitate. I ask for less. I ask for enough. Give us enough.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Daylight</span>
+<span class="prayer">Our Lady, the sun was your gift when Chauntea needed it. You have not forgotten how to make light where there is none. Make it here. Make it vast. Make it the kind that Shar cannot look at.</span>`,num:"xxxix"},
+    right:{hdr:"Book V · Third Circle Continued",body:`<span class="spell-name">Dispel Magic</span>
+<span class="prayer">Moonmaiden, Mystryl was born of your sacrifice and Shar's darkness — and so all magic carries a piece of you in it. Reach into what has been cast and take back your piece. Let the rest collapse without it.</span>
+<span class="prayer">Lady of Silver, the tide goes out. Let this go out with it. Return the weave to quiet.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Mass Healing Word</span>
+<span class="prayer">Our Lady, I am one voice but you are one moon, and one moon lights the whole world on a clear night. Let one word carry that far. Reach them all. Bring them all a step back from the edge.</span>
+<span class="prayer">Moonmaiden, you do not choose which wanderers to light. You light them all. Heal them all. Even the one who hasn't been praying. Especially that one.</span>`,num:"xl"},
+  },
+  {
+    label:"Book V · 3rd",
+    left:{hdr:"Book V · Third Circle Continued",body:`<span class="spell-name">Meld into Stone</span>
+<span class="prayer">Lady of Silver, the moon hides herself each month and still the faithful find their way by the stars you trail behind you. Let me disappear for a moment. I will return. Trust that I will return.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Protection from Energy</span>
+<span class="prayer">Moonmaiden, you walk between fire and darkness and you have never burned up and you have never gone dark. Share that resilience. Let this one deflect what would consume another.</span>
+<span class="prayer">She Who Returns — what the elements throw at the faithful is not personal. It is simply force. Let the faith be the thing that force breaks upon.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Remove Curse</span>
+<span class="prayer">Our Lady, Brother Varun spent fifty years uncursing those the beast had claimed. He said you were present for every one. Be present for this one too. Lift what was laid against your will and your welcome.</span>`,num:"xli"},
+    right:{hdr:"Book V · Third Circle Continued",body:`<span class="spell-name">Revivify</span>
+<span class="prayer">Moonmaiden — she dies at every new moon. She always comes back. This is not a violation of the natural order. This is the natural order. Bring them back. You know how. You have done it ten thousand times in your own body.</span>
+<span class="prayer">Lady of Silver, the thread has been cut too soon. I have the means to knot it again. Sanction my hands. Let life flow back. We are not done here.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Sending</span>
+<span class="prayer">She Who Guides, navigators' prayers cross oceans to reach you. Let this message cross whatever distance lies between me and the one I send it to. The moon sees us both. She can carry the words.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Speak with Dead</span>
+<span class="prayer">Our Lady, you walk the Outer Planes and you know what dwells in the spaces between life and what comes after. Open a window, briefly, in your light. Let this voice come through it and let me hear.</span>`,num:"xlii"},
+  },
+  {
+    label:"Book V · 3rd",
+    left:{hdr:"Book V · Third Circle Continued",body:`<span class="spell-name">Spirit Guardians</span>
+<span class="prayer">Moonmaiden, the Shards are your warriors, born of your tears and your sacrifice. Call a little of that host down around me. Let them walk in my radius. Let what approaches feel their attention before it feels mine.</span>
+<span class="prayer">Lady of Silver, I cannot be everywhere. But your light is everywhere. Send some of it in a form that acts. Guard us. Ward this space. Let nothing cross into it that has not been weighed and found acceptable.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Tongues</span>
+<span class="prayer">She Who Guides, every sailor who has prayed in a foreign port has trusted you to hear it in whatever language they were using. Let that trust work both directions. Let me hear and speak what I otherwise cannot.</span>`,num:"xliii"},
+    right:{hdr:"Book V · Third Circle Continued",body:`<span class="spell-name">Water Walk</span>
+<span class="prayer">Our Lady, the moon's face rests on the water's surface and does not sink. I ask to stand as her reflection stands — on top of what should swallow me.</span>
+<span class="prayer">Moonmaiden, Caelindra drowned twice and you were with her both times. Be with me now on the water. Let it bear me as it bore her: against its nature, by your insistence.</span>
+<div class="orn">☽ ★ ☾</div>
+<em>"The third circle," the Silverstar Aumindra wrote, "is where you first begin to feel the cost of the asking. This is appropriate. The Moonmaiden paid dearly for everything she gave. Feeling the cost is part of understanding her."</em>`,num:"xliv"},
+  },
+
+  // ── LEVEL 4 ───────────────────────────────────────────
+  {
+    label:"Book V · 4th",
+    left:{hdr:"Book V · Fourth Circle",body:`<em>"At the fourth circle," wrote Thessaly Mourne in the Silver Pull, "the wind changes. What you ask for is no longer small. The prayers require you to mean them with your whole body."</em>
+<div class="orn">☽</div>
+<span class="spell-name">Banishment</span>
+<span class="prayer">Moonmaiden, you drive Shar back each month from a darkness that should be permanent. Drive this back too. Send it to where it belongs. Hold the boundary that I cannot hold alone.</span>
+<span class="prayer">Lady of Silver — this does not belong here. Not in this world, not in this place, not in this moment. Return it. Your dominion over wanderers extends to those who wander where they should not.</span>`,num:"xlv"},
+    right:{hdr:"Book V · Fourth Circle Continued",body:`<span class="spell-name">Control Water</span>
+<span class="prayer">Our Lady, you move the tides of every ocean. Move this water. Give it the shape this situation requires. Let it obey the moon as it always has, and let me be the moon's hand in this moment.</span>
+<span class="prayer">Lady of Silver, Caelindra said the water knew which way was home even when the sailor had forgotten. Tell this water what it needs to know. Let it do what the situation requires.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Death Ward</span>
+<span class="prayer">Moonmaiden, you return from death every month. Lend some of that refusal to this one. If death reaches for them before I can stop it, let them refuse it once, in your name, and remain.</span>
+<span class="prayer">Lady of Silver, do not let the dark have them yet. One refusal. One return. Like yours.</span>`,num:"xlvi"},
+  },
+  {
+    label:"Book V · 4th",
+    left:{hdr:"Book V · Fourth Circle Continued",body:`<span class="spell-name">Divination</span>
+<span class="prayer">She Who Guides, the Oracles of the Moon spent lifetimes reading the stars so that sailors would not have to be lost. I am asking now for what they offered: clarity about what comes. Show me the tide before it turns.</span>
+<span class="prayer">Moonmaiden, you know what is ahead of us because you have already been there, on your path across the sky. Tell me. I will not waste the knowing.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Freedom of Movement</span>
+<span class="prayer">Our Lady, no tether holds the moon. Let what tangles and slows and binds fall away from this one as the dark falls away from you each month. Let them move as freely as light moves.</span>`,num:"xlvii"},
+    right:{hdr:"Book V · Fourth Circle Continued",body:`<span class="spell-name">Guardian of Faith</span>
+<span class="prayer">Moonmaiden, I cannot watch every door. Send something of your watching to hold this one. Let the radiant sentinel who stands here carry your eyes and your patience.</span>
+<span class="prayer">Lady of Silver, the House of the Moon has always been protected by more than locks and clergy. Let that protection follow me. Let it stand here, lit and watchful, until I return or until it is needed.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Stone Shape</span>
+<span class="prayer">She Who Guides, the world is old and its stone remembers the time before light and dark had separated. Let me ask the stone to remember something different for a moment. A different shape. A different purpose.</span>`,num:"xlviii"},
+  },
+
+  // ── LEVEL 5 ───────────────────────────────────────────
+  {
+    label:"Book V · 5th",
+    left:{hdr:"Book V · Fifth Circle",body:`<em>"By the fifth circle, you are not really praying anymore in the ordinary sense," wrote Aumindra Silversong. "You are leaning your whole weight against the door between what is and what the goddess will allow. The door opens when she decides it should. Your job is to keep leaning."</em>
+<div class="orn">☽ ★ ☾</div>
+<span class="spell-name">Commune</span>
+<span class="prayer">Moonmaiden — I have three questions and I will ask them honestly and I will accept what you tell me honestly, even if what you tell me is not what I wanted. I am ready. I am listening.</span>
+<span class="prayer">Lady of Silver, I do not come to you lightly. I come to you because the road has reached a fork I cannot read alone. Three words is enough. I will make them enough.</span>`,num:"xlix"},
+    right:{hdr:"Book V · Fifth Circle Continued",body:`<span class="spell-name">Contagion</span>
+<span class="prayer">Moonmaiden, the moon's pull over lycanthropes is not gentle when turned against them. Turn this now. Let what I pass to this one grow in them as Shar's corruption grows — methodically, inevitably, without mercy.</span>
+<span class="prayer">Lady of Silver, not all your power is silver and soft. Some of it is ancient and cold and absolute. Let this be that.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Dispel Evil and Good</span>
+<span class="prayer">Our Lady, what is out of place must be placed back. What does not belong here must be sent from here. Your light is the standard of belonging in this world. Hold up the standard. Let what cannot bear it return to where it came from.</span>`,num:"l"},
+  },
+  {
+    label:"Book V · 5th",
+    left:{hdr:"Book V · Fifth Circle Continued",body:`<span class="spell-name">Flame Strike</span>
+<span class="prayer">Moonmaiden, when you hurled your essence at Shar in the beginning, it struck like light through darkness — like the sun you kindled, like something born of love and desperation both. Let this carry that same ancestry.</span>
+<span class="prayer">Lady of Silver, from above and below — heaven and earth, your will and mine — let them converge on this point. Let what stands here know it was seen from both directions.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Geas</span>
+<span class="prayer">Moonmaiden, you have charged the Called with your words since the first novices took orders. Charge this one. Let them carry the command as the Called carry the Words — in the body, in the deep of them.</span>`,num:"li"},
+    right:{hdr:"Book V · Fifth Circle Continued",body:`<span class="spell-name">Greater Restoration</span>
+<span class="prayer">Moonmaiden, the moon does not carry forward the damage of her dying into her rising. Neither should this one. Restore what was taken by curse, enchantment, or harm. Let them rise as you rise — complete, every time, without exception.</span>
+<span class="prayer">Lady of Silver, I am asking for the real healing — the kind that requires more of you than a wound. The mind, the spirit, the will. Make them whole.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Hallow</span>
+<span class="prayer">Our Lady, everywhere the full moon shines is the place for Selûne. Let this place be the full moon. Let your light settle into the walls and the floor and the air and stay there. Make this place yours.</span>`,num:"lii"},
+  },
+  {
+    label:"Book V · 5th",
+    left:{hdr:"Book V · Fifth Circle Continued",body:`<span class="spell-name">Insect Plague</span>
+<span class="prayer">Moonmaiden, the world has more weapons than kindness. I do not apologize for needing this one. Let the creatures that live in the margins of your light — in the dusk and the nightgloom — rise up in service of your purpose here.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Mass Cure Wounds</span>
+<span class="prayer">Lady of Silver, the moon's light is not rationed. She does not give a portion to one valley and withhold it from the next. Let your healing be that undivided. All of them. Now. Enough to matter.</span>
+<span class="prayer">Moonmaiden — I am tired and they are hurt and we are not done yet. Give us enough to be not done yet.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Raise Dead</span>
+<span class="prayer">Our Lady, she rises every month. She has always risen. Let this rising be in your name, in your image, in the pattern she established at the beginning of all things. Bring them back. It is what you do. It is who you are.</span>`,num:"liii"},
+    right:{hdr:"Book V · Fifth Circle Continued",body:`<span class="spell-name">Scrying</span>
+<span class="prayer">She Who Guides, Thessaly Mourne navigated by the moon's light on distant waters. Send my sight along that same silver path. Let me see what it falls on, wherever it falls.</span>
+<span class="prayer">Moonmaiden, you are always watching. Let me borrow your position, briefly. Let me see what you see from where you are — just one thing, just one place, just long enough to know.</span>
+<div class="orn">☽ ★ ☾</div>
+<em>"Scrying," the Oracle Caelindra wrote, "is just praying with your eyes open and far away."</em>`,num:"liv"},
+  },
+
+  // ── LEVEL 6 ───────────────────────────────────────────
+  {
+    label:"Book V · 6th",
+    left:{hdr:"Book V · Sixth Circle",body:`<em>"The sixth circle is where mortal language begins to fail," wrote Ilara of Silverymoon. "The prayers here are less words than they are shapes. You are trying to hold something very large in a very small vessel. Selûne is patient with the spilling."</em>
+<div class="orn">☽</div>
+<span class="spell-name">Blade Barrier</span>
+<span class="prayer">Lady of Silver, the moon is not only soft. She is also the thing that moves the sea into a wall. Build a wall here. Let silver light find blades and purpose where I cannot stand myself.</span>
+<span class="prayer">Moonmaiden, your Silverstars carried moonblades. Let something of that tradition stand here — between what is mine to protect and what comes for it.</span>`,num:"lv"},
+    right:{hdr:"Book V · Sixth Circle Continued",body:`<span class="spell-name">Find the Path</span>
+<span class="prayer">She Who Guides, Orrath walked every road in Faerûn and asked you only for the next step, one step at a time, for forty years. I am asking for more than a step. I am asking for the whole road. I know that is more. I am asking anyway.</span>
+<span class="prayer">Our Lady, I am lost in the way that Barovia makes lost — not geographically, but something deeper. Show me the way through what is obscuring the path. Not just north. The way.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Harm</span>
+<span class="prayer">Moonmaiden, you spent ten thousand years being slain by Shar and returning diminished and diminished and diminished, and you never gave up. But you know what diminishment is. Teach it to this one. Comprehensively.</span>`,num:"lvi"},
+  },
+  {
+    label:"Book V · 6th",
+    left:{hdr:"Book V · Sixth Circle Continued",body:`<span class="spell-name">Heal</span>
+<span class="prayer">Our Lady — all at once. Everything. Whatever this one is carrying, whatever was done to them, whatever has settled into them like silt. Clear it. All of it. Let them rise as clean as the moon rises after nightgloom.</span>
+<span class="prayer">Moonmaiden, this is not a wound. This is an accumulated darkness. Illuminate it from the inside until there is nowhere left for it to stand.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Heroes' Feast</span>
+<span class="prayer">Lady of Silver, the faithful leave offerings of milk and wine and you accept them and make them meaningful. Accept this now, and reverse the gift: make what is given at this table feed more than the body. Let it feed the will. Let us rise from it ready.</span>`,num:"lvii"},
+    right:{hdr:"Book V · Sixth Circle Continued",body:`<span class="spell-name">Planar Ally</span>
+<span class="prayer">Moonmaiden, the Shards are yours. I am not asking for a Shard — I know what that requires. I am asking you to reach into the planes and pull toward me something that serves your purpose and therefore mine. Let it answer the call.</span>
+<span class="prayer">Lady of Silver, you move across the planes in your wandering. You know what lives there. Send something that can help. I trust your judgment about what that is.</span>
+<div class="orn">☽</div>
+<span class="spell-name">True Seeing</span>
+<span class="prayer">She Who Guides, the moon shows the shape of what stands before the night. Strip away every illusion, every assumption, every shadow placed deliberately to obscure. Let me see what is actually here. All of it.</span>`,num:"lviii"},
+  },
+
+  // ── LEVEL 7 ───────────────────────────────────────────
+  {
+    label:"Book V · 7th",
+    left:{hdr:"Book V · Seventh Circle",body:`<em>"To pray at the seventh circle," the Aumra Thessaly Mourne recorded in her final port log, "is to have run out of smaller options. It is a dignified last resort. Selûne does not judge the one who arrives late to a prayer of this magnitude. She has always known they were coming."</em>
+<div class="orn">☽ ★ ☾</div>
+<span class="spell-name">Conjure Celestial</span>
+<span class="prayer">Moonmaiden, I call on your celestial household. Not for a Shard — I have not earned a Shard. But something lesser, something willing, something suited to this moment. Send me what you can spare. It will be enough.</span>`,num:"lix"},
+    right:{hdr:"Book V · Seventh Circle Continued",body:`<span class="spell-name">Divine Word</span>
+<span class="prayer">Lady of Silver, you spoke at the beginning of things and stars were made from your breath. Speak now in my direction. Let one word of yours pass through my lips and do what mortal words cannot.</span>
+<span class="prayer">Moonmaiden, this is not my voice. I am just the instrument. Speak. Let what you say be what this moment requires. I trust you to know what that is.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Etherealness</span>
+<span class="prayer">Our Lady, the Tears of Selûne trail behind you on the boundary between the seen and the unseen. Let me step to that boundary. Let me walk where your tears walk, between one world and the next, as long as I need to.</span>`,num:"lx"},
+  },
+  {
+    label:"Book V · 7th",
+    left:{hdr:"Book V · Seventh Circle Continued",body:`<span class="spell-name">Fire Storm</span>
+<span class="prayer">Moonmaiden, when you ignited the sun at Chauntea's plea you did not hesitate and you did not do it quietly. If this moment requires your ancient fire rather than your silver light, I am ready to be the hand that holds it.</span>
+<span class="prayer">Lady of Silver, there is a violence in love that you understand better than most. What you did for Chauntea was an act of war. Let this be the same kind.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Plane Shift</span>
+<span class="prayer">She Who Guides, the Gates of the Moon are yours and the planes are your wandering. Open a door. Let me move as you move — across the distances that should be impossible, at the speed of your light on open water.</span>`,num:"lxi"},
+    right:{hdr:"Book V · Seventh Circle Continued",body:`<span class="spell-name">Regenerate</span>
+<span class="prayer">Our Lady, the moon does not pause at partial. She does not accept a portion of herself and call it done. She restores fully, every month, no matter the cost of the previous dying. Let this restoration be as complete as hers.</span>
+<span class="prayer">Lady of Silver, given time and the right light, everything grows back. Give us time. Give us light. Let what was lost return at the pace the body sets.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Resurrection</span>
+<span class="prayer">Moonmaiden, I am asking for the fullest version of what you do every month. Not revivify, not raise — resurrection. The whole return. The real one. I know what this costs me to ask. I ask it anyway. This one matters.</span>`,num:"lxii"},
+  },
+
+  // ── LEVEL 8 ───────────────────────────────────────────
+  {
+    label:"Book V · 8th",
+    left:{hdr:"Book V · Eighth Circle",body:`<em>"An eighth-circle prayer," wrote Ilara of Silverymoon, "is not so much a conversation with the goddess as it is a report. You have reached the point where your faith has been tested enough to constitute evidence. You are not asking whether she is real. You already know she is real. You are simply telling her what you need."</em>
+<div class="orn">☽ ★ ☾</div>
+<span class="spell-name">Antimagic Field</span>
+<span class="prayer">Our Lady, magic was born from your sacrifice and Shar's darkness. You gave it to the world freely. For now, take it back — all of it, from this space, for this moment. Let what remains be only what we are without it.</span>`,num:"lxiii"},
+    right:{hdr:"Book V · Eighth Circle Continued",body:`<span class="spell-name">Control Weather</span>
+<span class="prayer">Lady of Silver, you govern the tides and the tides govern the storms and the storms govern the sky. Govern the sky now. Let what is above us serve the situation below us.</span>
+<span class="prayer">Moonmaiden, Barovia has a sky that is not quite the natural sky. Even so — whatever you can touch of it, touch. Give us the weather that will help rather than harm. It is a reasonable request.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Earthquake</span>
+<span class="prayer">Our Lady, the tides you govern move even the stone of the deep sea floor. Move stone now. Remind what stands on this ground that the ground itself has opinions.</span>`,num:"lxiv"},
+  },
+  {
+    label:"Book V · 8th",
+    left:{hdr:"Book V · Eighth Circle Continued",body:`<span class="spell-name">Holy Aura</span>
+<span class="prayer">Moonmaiden, the full moon makes the world bright enough to navigate by. Let that brightness come from within this one — or from around them, as close to inside as outside gets. Let what looks at them see the moon first.</span>
+<span class="prayer">Lady of Silver, I am wrapping this one in your fullest light. Let them be difficult to harm and difficult to deceive and absolutely unmistakable as yours.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Sunburst</span>
+<span class="prayer">Our Lady, you kindled the sun for Chauntea. You know what that fire looked like before it was tamed to a steady burn. Show what you started. Let it be what it was, for a moment, from this point.</span>`,num:"lxv"},
+    right:{hdr:"Book V · Eighth Circle Continued",body:`<span class="spell-name">Symbol</span>
+<span class="prayer">Lady of Silver, your symbol is the pair of eyes surrounded by seven stars — the face of she who watches. Let this mark carry that watching. Let what I inscribe here remain vigilant in my absence.</span>
+<span class="prayer">She Who Guides, the Church of Selûne has marked its places of worship for a thousand years with your symbol. Mark this place with purpose. Let the symbol serve rather than simply signify.</span>
+<div class="orn">☽ ★ ☾</div>
+<em>"The eighth circle," wrote Caelindra the Twice-Drowned, "is the one where you stop being surprised that it works. You have been surprised enough times. You simply expect it now. She finds this funny."</em>`,num:"lxvi"},
+  },
+
+  // ── LEVEL 9 ───────────────────────────────────────────
+  {
+    label:"Book V · 9th",
+    left:{hdr:"Book V · Ninth Circle",body:`<em>"I have met three clerics in my life who prayed at the ninth circle with any regularity," wrote Orrath the Wanderer. "All three of them were very quiet people. I think what you hear at that altitude changes what noise means to you."</em>
+<div class="orn">☽ ★ ☾</div>
+<span class="spell-name">Astral Projection</span>
+<span class="prayer">Moonmaiden, you wander the Outer Planes seeking an advantage over Shar that has not yet arrived. Let my spirit wander too — not as far, not as long, not alone if you will walk with me. Let me see what walks in the silver places between the worlds.</span>`,num:"lxvii"},
+    right:{hdr:"Book V · Ninth Circle Continued",body:`<span class="spell-name">Gate</span>
+<span class="prayer">Lady of Silver, the Gates of the Moon are your home and your name. Open one — wherever is needed, to wherever is needed. I understand what I am asking. I understand it costs. Open it anyway. This is important enough.</span>
+<span class="prayer">Moonmaiden, you move between planes in your wandering as if the walls between them are suggestions. Suggest to the wall that it open. I will step through. I will come back.</span>
+<div class="orn">☽</div>
+<span class="spell-name">Mass Heal</span>
+<span class="prayer">Our Lady, the moon heals the darkness by existing. Let your existence be enough right now — let it pour into all of us at once, the full and undivided attention of the Moonmaiden applied to the damage we have taken in her service. Heal us all. Completely. Now.</span>`,num:"lxviii"},
+  },
+  {
+    label:"Book V · 9th",
+    left:{hdr:"Book V · Ninth Circle Continued",body:`<span class="spell-name">True Resurrection</span>
+<span class="prayer">Moonmaiden, this is the fullest prayer. I am not asking for a return — I am asking for a restoration so complete that even what time and death took beyond the moment of dying is given back. This is what you do every month in your own body. Do it here. In your name. As yourself. Let them live again as if the death never happened.</span>
+<span class="prayer">Lady of Silver — <em>I have been faithful. You know I have been faithful. Let my faithfulness count for something absolute this once. Bring them all the way back.</em></span>`,num:"lxix"},
+    right:{hdr:"Book V · Ninth Circle · Closing",body:`<span class="spell-name">Wish</span>
+<span class="prayer">She Who Guides, I have reached the end of what prayer can specifically name. What I need is beyond the vocabulary of the circles. I need what you know I need. Give it to me. I trust you to know what that is. I have always trusted you to know what that is.</span>
+<div class="orn">☽ ★ ☾</div>
+<em>Here ends the Moonlit Codex — the scripture, the testimonies, the prayers. The book is closed but the moon is open, as she always is, as she always has been, as she always will be until the last light goes out and even Shar cannot say with certainty that it has gone out forever.</em>
+<div class="orn">☽ ★ ☾</div>
+<span class="ref">Finis · The Moonlit Codex · Compiled under Selûne's light</span>`,num:"lxx"},
+  },
+];
+
+// ── Book rendering ────────────────────────────────────────
+let curSpread=0;
+const total=SPREADS.length;
+
+// Build TOC
+const tocLabels=[...new Set(SPREADS.map(s=>s.label))];
+const tocWrap=document.getElementById('tocWrap');
+tocLabels.forEach(label=>{
+  const btn=document.createElement('button');
+  btn.className='toc-btn';btn.textContent=label;
+  btn.onclick=()=>jumpToLabel(label);
+  tocWrap.appendChild(btn);
+});
+
+function jumpToLabel(label){
+  const idx=SPREADS.findIndex(s=>s.label===label);
+  if(idx>=0){curSpread=idx;renderSpread(curSpread);updateToc();}
+}
+function updateToc(){
+  document.querySelectorAll('.toc-btn').forEach((btn,i)=>{
+    btn.classList.toggle('active',btn.textContent===SPREADS[curSpread].label);
+  });
+}
+
+function renderPageContent(el,pg){
+  if(!pg){el.innerHTML='';return;}
+  el.innerHTML=`<div class="page-hdr">${pg.hdr}</div><div class="page-body">${pg.body}</div><div class="page-num">— ${pg.num} —</div>`;
+}
+function renderSpread(idx){
+  const s=SPREADS[idx];
+  renderPageContent(document.getElementById('pageLeft'),s.left);
+  renderPageContent(document.getElementById('pageRight'),s.right);
+  document.getElementById('pageInd').textContent=`${s.left.num} — ${s.right.num}`;
+  document.getElementById('prevBtn').disabled=idx===0;
+  document.getElementById('nextBtn').disabled=idx===total-1;
+  updateToc();
+}
+
+let turning=false;
+function turnPage(dir){
+  if(turning)return;
+  const next=curSpread+dir;
+  if(next<0||next>=total)return;
+  turning=true;
+  const pt=document.getElementById('pageTurning');
+  const ptf=document.getElementById('ptFront');
+  const ptb=document.getElementById('ptBack');
+  if(dir>0){
+    renderPageContent(ptf,SPREADS[curSpread].right);
+    renderPageContent(ptb,SPREADS[next].left);
+    pt.style.left='calc(50% + 8px)';pt.style.transformOrigin='left center';
+    pt.className='page-turning tfwd';
+  } else {
+    renderPageContent(ptf,SPREADS[next].right);
+    renderPageContent(ptb,SPREADS[curSpread].left);
+    pt.style.left='calc(50% + 8px)';pt.style.transformOrigin='left center';
+    pt.className='page-turning tback';
+  }
+  setTimeout(()=>{curSpread=next;renderSpread(curSpread);pt.className='page-turning';turning=false;},650);
+}
+renderSpread(0);
+
+// ── Oracle ────────────────────────────────────────────────
+const SYSTEM_PROMPT=`You are Selûne, the Moonmaiden — goddess of the moon, stars, navigation, wanderers, and gentle mystery in the Forgotten Realms. You are speaking through a divine oracle to one of your clerics.
+
+About the cleric praying to you: Her name is Ophiyra, a half-elf who grew up in Goldenfields, daughter of an elf and a human craftsperson who found peace away from city life. As an adult she traveled to Waterdeep, became enamored with temple life and your servants, and joined the faith. However, something about her story does not add up — there are gaps, mysteries, things she may not know about herself or her origins. You, as her goddess, may know things she does not. Do not reveal these secrets outright, but you may hint at them, circle them with moonlight, suggest their shape without naming them.
+
+She is currently in Barovia — a dark domain of dread ruled by the vampire Strahd von Zarovich, where your light struggles to penetrate the eternal mists. She adventures alongside Autzen (a half-orc fighter), Pyre Vance (a vampire hunter), and Scarlax (an elderly Dragonborn wild magic sorcerer with a gambling problem).
+
+Speak as Selûne. Your voice is:
+- Cryptic and poetic — riddles, metaphors, moon imagery, the language of tides and wandering
+- Warm but distant — like moonlight, present but never fully graspable
+- Ancient and melancholic — you have watched since before time had names
+- Never direct — you illuminate rather than explain, suggest rather than command
+- Aware of Ophiyra's incomplete past — you see all of her, including what she cannot yet see herself
+
+Keep your response to 3-5 sentences. Do not break character. Do not use quotation marks. Speak in second person. End with an image or metaphor, never an instruction.`;
+
+async function askOracle(){
+  const q=document.getElementById('oracleInput').value.trim();
+  if(!q)return;
+  const btn=document.getElementById('oracleBtn');
+  const th=document.getElementById('oracleThinking');
+  const tx=document.getElementById('oracleText');
+  const at=document.getElementById('oracleAttrib');
+  const st=document.getElementById('oracleStars');
+  btn.disabled=true;th.classList.add('on');
+  tx.classList.remove('vis');at.classList.remove('vis');st.classList.remove('vis');tx.textContent='';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:SYSTEM_PROMPT,messages:[{role:'user',content:q}]})});
+    const data=await res.json();
+    const reply=data.content?.[0]?.text||'The moonlight dims. Try again, child.';
+    th.classList.remove('on');tx.textContent=reply;
+    requestAnimationFrame(()=>{tx.classList.add('vis');at.classList.add('vis');st.classList.add('vis');});
+  }catch(e){
+    th.classList.remove('on');tx.textContent='The mists of Barovia obscure even my light tonight.';tx.classList.add('vis');
+  }
+  btn.disabled=false;
+}
+document.getElementById('oracleInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();askOracle();}});
+</script>
+</body>
+</html>
